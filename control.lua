@@ -44,7 +44,7 @@ local function raise_event(event_name, event_data)
                         return
                     end
                 end
-                item:raise_event(event_name, event_data)
+                item:raise_event(event_name, data.process, event_data)
             else
                 global.computers[index] = nil
             end
