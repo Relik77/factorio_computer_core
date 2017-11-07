@@ -28,7 +28,9 @@ baseEnv = {
 }
 
 local function raise_event(event_name, event_data)
-    if not global.computers then global.computers = {} end
+    if not global.computers then
+        global.computers = {}
+    end
 
     for index, data in pairs(global.computers) do
         if not data.entity or (not data.entity.valid and not data.entityIsPlayer) then
@@ -36,7 +38,13 @@ local function raise_event(event_name, event_data)
         elseif data.process ~= nil then
             local item = computer.load(data)
             if item then
-                item:raise_event(event_name, data.process, event_data)
+                for index, validate in pairs(data.apis or {}) do
+                    if not validate() then
+                        item:exec("stop", false)
+                        return
+                    end
+                end
+                item:raise_event(event_name, event_data)
             else
                 global.computers[index] = nil
             end

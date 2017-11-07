@@ -561,8 +561,13 @@ computer.commands = {
                 proxies = {
                 }
             };
+            fs.apis = {};
             for index, api in pairs(computer.apis) do
                 if apiAllowed(api, fs.entity) then
+                    table.insert(fs.apis, function()
+                        return apiAllowed(api, fs.entity)
+                    end)
+
                     local item = env.apis[api.name]
                     if not item then
                         item = {
@@ -676,6 +681,7 @@ computer.commands = {
         function(self, fs)
             self:raise_event("on_script_kill", fs.process)
             fs.process = nil
+            fs.output = ""
             self:clearEvents()
         end
     },

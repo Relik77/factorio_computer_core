@@ -56,6 +56,7 @@ computer = {
         else
             obj.data = {
                 entity = entity,
+                entityIsPlayer = nil,
 
                 label = nil,
 
@@ -64,6 +65,7 @@ computer = {
                 process = nil,
 
                 events = {},
+                apis = {},
 
                 root = {
                     type = "dir",

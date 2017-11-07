@@ -45,11 +45,9 @@ computer.guis["output"] = {
         elseif name == self.prefix .. "stopbtn" then
             self.os.data.file = nil
             self.os:exec("stop", false)
-            self.os.data.output = ""
             self.os:openGui("console")
         elseif name == self.prefix .. "editbtn" then
             self.os:exec("stop", false)
-            self.os.data.output = ""
             self.os:exec("edit", self.file)
         end
     end,
