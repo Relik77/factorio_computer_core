@@ -1,0 +1,11 @@
+{
+    "name": "computer_core",
+    "version": "1.0.0",
+    "title": "Computer Core",
+    "author": "Relik",
+    "contact": "",
+    "homepage": "",
+    "factorio_version": "0.15",
+    "dependencies": ["base >= 0.15"],
+    "description": "Computer is a modification for Factorio that’s all about computer programming. It allows you to write programs using the Lua programming language."
+}
