@@ -452,6 +452,12 @@ computer.commands = {
             self:exec("rm " .. srcfile)
         end
     },
+    position = {
+        "position - Return the current computer position",
+        function(self, fs)
+            return table.tostring(fs.entity.position)
+        end
+    },
     pwd = {
         "pwd - print name of current/working directory",
         function(self, fs)
