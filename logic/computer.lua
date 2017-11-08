@@ -2,6 +2,7 @@ require("logic.util")
 
 if not global.computerGuis then global.computerGuis = {} end
 if not global.computers then global.computers = {} end
+if not global.waypoints then global.waypoints = {} end
 
 computer = {
     apis = {},

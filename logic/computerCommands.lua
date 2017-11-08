@@ -855,5 +855,11 @@ computer.commands = {
 
             return text
         end
+    },
+    waypoint = {
+        "waypoint - Edit saved waypoints",
+        function(self, fs)
+            self:openGui("waypoint")
+        end
     }
 }

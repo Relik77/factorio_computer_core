@@ -7,6 +7,7 @@ require("logic.gui.computerGauntletGui")
 require("logic.gui.computerConsoleGui")
 require("logic.gui.computerEditorGui")
 require("logic.gui.computerOutputGui")
+require("logic.gui.computerWaypointGui")
 
 require("logic.apis.term")
 require("logic.apis.os")
@@ -53,13 +54,12 @@ local function raise_event(event_name, event_data)
 end
 
 local function OnTick(event)
---    if not global.computers then global.computers = {} end
---
---    local count = 0
---    for k, v in pairs(global.computers) do
---        count = count + 1
---    end
---    game.print("computers : " .. count)
+    for index, gui in pairs(global.computerGuis or {}) do
+        if type(gui.OnTick) == "function" then
+            gui:OnTick(event)
+        end
+    end
+
     raise_event("on_tick", event)
 end
 
@@ -78,7 +78,7 @@ local function OnGuiClick(event)
                 global.computerGuis[player.index] = nil
             end
         else
-            if global.computerGuis[player.index] then
+            if global.computerGuis[player.index] and type(global.computerGuis[player.index].OnGuiClick) == "function" then
                 global.computerGuis[player.index]:OnGuiClick(event)
             end
         end
@@ -91,8 +91,44 @@ local function OnGuiTextChanged(event)
     if name:match("^computer_") then
         local player = game.players[event.player_index]
 
-        if global.computerGuis[player.index] then
+        if global.computerGuis[player.index] and type(global.computerGuis[player.index].OnGuiTextChanged) == "function" then
             global.computerGuis[player.index]:OnGuiTextChanged(event)
+        end
+    end
+end
+
+local function OnGuiSelectionStateChanged(event)
+    local name = event.element.name
+
+    if name:match("^computer_") then
+        local player = game.players[event.player_index]
+
+        if global.computerGuis[player.index] and type(global.computerGuis[player.index].OnGuiSelectionStateChanged) == "function" then
+            global.computerGuis[player.index]:OnGuiSelectionStateChanged(event)
+        end
+    end
+end
+
+local function OnGuiCheckedStateChanged(event)
+    local name = event.element.name
+
+    if name:match("^computer_") then
+        local player = game.players[event.player_index]
+
+        if global.computerGuis[player.index] and type(global.computerGuis[player.index].OnGuiCheckedStateChanged) == "function" then
+            global.computerGuis[player.index]:OnGuiCheckedStateChanged(event)
+        end
+    end
+end
+
+local function OnGuiElemChanged(event)
+    local name = event.element.name
+
+    if name:match("^computer_") then
+        local player = game.players[event.player_index]
+
+        if global.computerGuis[player.index] and type(global.computerGuis[player.index].OnGuiElemChanged) == "function" then
+            global.computerGuis[player.index]:OnGuiElemChanged(event)
         end
     end
 end
@@ -178,6 +214,9 @@ script.on_event(defines.events.on_tick, OnTick)
 
 script.on_event(defines.events.on_gui_click, OnGuiClick)
 script.on_event(defines.events.on_gui_text_changed, OnGuiTextChanged)
+script.on_event(defines.events.on_gui_selection_state_changed, OnGuiSelectionStateChanged)
+script.on_event(defines.events.on_gui_checked_state_changed, OnGuiCheckedStateChanged)
+script.on_event(defines.events.on_gui_elem_changed, OnGuiElemChanged)
 
 script.on_event(defines.events.on_player_joined_game, OnPlayerJoinedGame)
 script.on_event(defines.events.on_player_left_game, OnPlayerLeft)
