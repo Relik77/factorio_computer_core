@@ -191,14 +191,7 @@ computer = {
             player = curentPlayer
         end
 
-        if curentPlayer then
-            player.print("computer.openGui type '" .. type .. "' for player: " .. player.name .. " used by " .. curentPlayer.name)
-        else
-            player.print("computer.openGui type '" .. type .. "' for player: " .. player.name .. " used by nobody")
-        end
-
         if curentPlayer and curentPlayer ~= player then
-            player.print("Another player is associed to this computer")
             if global.computerGuis[curentPlayer.index] and global.computerGuis[curentPlayer.index].os == self then
                 player.print("Another player is already connected to this computer")
                 return nil

@@ -575,35 +575,47 @@ computer.commands = {
                     end)
 
                     local item = env.apis[api.name]
+                    local player = self:getPlayer()
                     if not item then
                         item = {
-                            name = api.name,
-                            entity = fs.entity,
-                            player = self:getPlayer(),
-                            getAPI = function(name)
+                            __name = api.name,
+                            __entity = fs.entity,
+                            __player = player,
+                            __getAPI = function(name)
                                 return env.proxies[name]
                             end,
-                            getOutput = function()
+                            __getOutput = function()
                                 return self.data.output
                             end,
-                            setOutput = function(text)
+                            __setOutput = function(text)
                                 self.data.output = text
                                 local gui = searchInTable(global.computerGuis, self.data, "os", "data")
                                 if gui and gui.print then
                                     gui:print(self.data.output)
                                 end
                             end,
-                            getGameTick = function()
+                            __getGameTick = function()
                                 return game.tick
                             end,
-                            getLabel = function()
+                            __getLabel = function()
                                 return self.data.label
                             end,
-                            setLabel = function(label)
+                            __setLabel = function(label)
                                 self.data.label = label
                             end,
-                            getID = function()
+                            __getID = function()
                                 return table.id(self.data)
+                            end,
+                            __getWaypoint = function(name)
+                                if not global.waypoints then
+                                    global.waypoints = {}
+                                end
+                                for index, waypoint in pairs(global.waypoints) do
+                                    if waypoint.force == player.force and waypoint.name == name then
+                                        return waypoint
+                                    end
+                                end
+                                return nil
                             end
                         }
 

@@ -11,13 +11,13 @@ table.insert(computer.apis,{
                 if type(text) == "table" then
                     text = table.tostring(text)
                 end
-                self.setOutput(self.getOutput() .. text .. "\n")
+                self.__setOutput(self.__getOutput() .. text .. "\n")
             end
         },
         clear = {
             "term.clear() - Clears the entire screen.",
             function(self)
-                self.setOutput("")
+                self.__setOutput("")
             end
         }
     }

@@ -26,25 +26,25 @@ table.insert(computer.apis,{
         getComputerID = {
             "os.getComputerID() - Returns the uniq ID of this computer",
             function(self)
-                return self.getID()
+                return self.__getID()
             end
         },
         getComputerLabel = {
             "os.getComputerLabel() - Returns the label of this computer",
             function(self)
-                return self.getLabel()
+                return self.__getLabel()
             end
         },
         setComputerLabel = {
             "os.setComputerLabel(label) - Set the label of this computer",
             function(self, label)
-                self.setLabel(label)
+                self.__setLabel(label)
             end
         },
         time = {
             "os.time() - Returns the current in-game hour",
             function(self)
-                local time = (self.getGameTick() % 25000) / 25000 * 24 + 12
+                local time = (self.__getGameTick() % 25000) / 25000 * 24 + 12
                 if time >= 24 then
                     time = time - 24
                 end
@@ -54,7 +54,7 @@ table.insert(computer.apis,{
         date = {
             "os.date() - Returns the current in-game date",
             function(self)
-                return self.getGameTick()
+                return self.__getGameTick()
             end
         },
         wait = {
@@ -62,7 +62,7 @@ table.insert(computer.apis,{
             function(self, callback, seconds)
                 table.insert(self._callbacks, {
                     type = "wait",
-                    time = self.getGameTick() + seconds * 60,
+                    time = self.__getGameTick() + seconds * 60,
                     callback = callback
                 })
             end

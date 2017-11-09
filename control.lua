@@ -200,7 +200,6 @@ script.on_event("open-computer", function (event)
         local distance = getDistance(player.position, player.selected.position)
         if distance <= 10 and supportedEntity(player.selected) then
             if not global.computerGuis[player.index] then
-                player.print("openGui type 'console' for player: " .. player.name)
                 computer.new(player.selected):openGui("console", player)
             else
                 global.computerGuis[player.index]:destroy()
