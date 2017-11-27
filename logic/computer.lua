@@ -158,6 +158,25 @@ computer = {
         return labels
     end,
 
+    getComputers = function(self, label)
+        local player = self:getPlayer()
+        local computers = {}
+
+        if player then
+            for i, computerData in pairs(global.computers) do
+                local _computer = computer.load(computerData)
+                if _computer then
+                    local computerPlayer = _computer:getPlayer()
+                    if computerPlayer and (computerPlayer.force == player.force or computerPlayer.force.get_friend(player.force)) and (not label or computerData.label == label) then
+                        table.insert(computers, _computer)
+                    end
+                end
+            end
+        end
+
+        return computers
+    end,
+
     registerEvent = function(self, name, callback)
         if not self.data.events then self.data.events = {} end
 
@@ -168,6 +187,10 @@ computer = {
     end,
 
     raise_event = function(self, event_name, process, ...)
+        if self.data.entity.electric_buffer_size and self.data.entity.energy == 0 then
+            return
+        end
+
         for index, event in pairs(self.data.events) do
             if event.name == event_name then
                 event.callback(process, ...)
@@ -268,7 +291,8 @@ remote.add_interface("computer_core", {
                     else
                         game.print("Debug: " .. tostring(text))
                     end
-                end
+                end,
+                remote = remote
             }))
             assert(err == nil, err)
             local success, obj = pcall(construct)
@@ -276,5 +300,8 @@ remote.add_interface("computer_core", {
             api = obj
         end
         table.insert(computer.apis, api)
+    end,
+    addEntityStructure = function(struct)
+        table.insert(global.structures, struct)
     end
 })

@@ -580,6 +580,7 @@ computer.commands = {
                         item = {
                             __name = api.name,
                             __entity = fs.entity,
+                            __entityStructure = searchInTable(global.structures, fs.entity, 'entity'),
                             __player = player,
                             __getAPI = function(name)
                                 return env.proxies[name]
@@ -605,6 +606,20 @@ computer.commands = {
                             end,
                             __getID = function()
                                 return table.id(self.data)
+                            end,
+                            __emit = function(label, event_name, ...)
+                                for index, computer in pairs(self:getComputers(label)) do
+                                    if computer.data and computer.data.process then
+                                        computer:raise_event(event_name, computer.data.process, ...)
+                                    end
+                                end
+                            end,
+                            __broadcast = function(event_name, ...)
+                                for index, computer in pairs(self:getComputers()) do
+                                    if computer.data and computer.data.process then
+                                        computer:raise_event(event_name, computer.data.process, ...)
+                                    end
+                                end
                             end,
                             __getWaypoint = function(name)
                                 if not global.waypoints then

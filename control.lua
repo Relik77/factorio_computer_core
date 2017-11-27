@@ -11,6 +11,8 @@ require("logic.gui.computerWaypointGui")
 
 require("logic.apis.term")
 require("logic.apis.os")
+require("logic.apis.lan")
+require("logic.apis.wlan")
 
 baseEnv = {
     ipairs = ipairs,
@@ -67,7 +69,9 @@ local function OnGuiClick(event)
     local name = event.element.name
 
     if name:match("^computer_") then
-        if not global.computerGuis then global.computerGuis = {} end
+        if not global.computerGuis then
+            global.computerGuis = {}
+        end
         local player = game.players[event.player_index]
 
         if name == "computer_gauntlet_btn" then
@@ -133,6 +137,119 @@ local function OnGuiElemChanged(event)
     end
 end
 
+local function struct_create_or_revive(entity_type, surface, area, position, force)
+    local found_ghost = false
+    local ghosts = surface.find_entities_filtered {
+        area = area,
+        name = "entity-ghost",
+        force = force }
+    for _, each_ghost in pairs(ghosts) do
+        if each_ghost.valid and each_ghost.ghost_name == entity_type then
+            if found_ghost then
+                each_ghost.destroy()
+            else
+                each_ghost.revive()
+                if not each_ghost.valid then
+                    found_ghost = true
+                else
+                    each_ghost.destroy()
+                end
+            end
+        end
+    end
+
+    if found_ghost then
+        local entity = surface.find_entities_filtered {
+            area = area,
+            name = entity_type,
+            force = force,
+            limit = 1
+        }[1]
+        if entity then
+            entity.direction = defines.direction.south
+            entity.teleport(position)
+            return entity
+        end
+    else
+        local reals = surface.find_entities_filtered {
+            area = area,
+            name = entity_type,
+            limit = 1
+        }
+        if #reals == 1 then
+            return reals[1]
+        end
+
+        return surface.create_entity {
+            name = entity_type,
+            position = position,
+            force = force,
+            fast_replace = true
+        }
+    end
+end
+
+local function OnBuiltEntity(event)
+    local entity = event.created_entity
+
+    if not (entity and entity.valid) then
+        return
+    end
+    if not global.structures then
+        global.structures = {}
+    end
+
+    if entity.name == "computer-entity" then
+        local struct = {
+            type = "computer",
+            entity = entity,
+            sub = {}
+        }
+
+        struct.sub.left_combinator = struct_create_or_revive(
+        "computer-combinator",
+        entity.surface, -- surface
+        { { entity.position.x - 1.5, entity.position.y - 1 }, { entity.position.x + 0, entity.position.y + 1 } }, -- ghost search area
+        { x = entity.position.x - 0.83, y = entity.position.y + 0.51 }, -- position
+        entity.force
+        )
+        struct.sub.left_combinator.destructible = false
+
+        struct.sub.right_combinator = struct_create_or_revive(
+        "computer-combinator",
+        entity.surface, -- surface
+        { { entity.position.x + 0, entity.position.y - 1 }, { entity.position.x + 1.5, entity.position.y + 1 } }, -- ghost search area
+        { x = entity.position.x + 0.76, y = entity.position.y + 0.51 }, -- position
+        entity.force
+        )
+        struct.sub.right_combinator.destructible = false
+
+        table.insert(global.structures, struct)
+    end
+end
+
+local function OnEntityDied(event)
+    local entity = event.entity
+
+    if not entity.valid then return end
+    if global.structures then
+        local index = searchIndexInTable(global.structures, entity, 'entity')
+        local struct = global.structures[index]
+
+        if not struct then return end
+
+        if struct.sub then
+            for key, subentity in pairs(struct.sub) do
+                if subentity.valid then
+                    subentity.destroy()
+                end
+                struct.sub[key] = nil
+            end
+        end
+        global.structures[index] = nil
+    end
+end
+
 local function OnPlayerJoinedGame(event)
     local player = game.players[event.player_index]
     local technology = player.force.technologies["computer-gauntlet-technology"]
@@ -172,6 +289,9 @@ local function supportedEntity(entity)
     if not entity then
         return false
     end
+    if entity.name == "computer-entity" then
+        return true
+    end
     for index, api in pairs(computer.apis) do
         if type(api.entities) == "function" and api.entities(entity) then
             return true
@@ -191,21 +311,33 @@ local function supportedEntity(entity)
     return false
 end
 
-script.on_event("open-computer", function (event)
-    if not global.computerGuis then global.computerGuis = {} end
-    local player = game.players[event.player_index]
+local function OpenComputer(player, entity)
+    if entity.electric_buffer_size and entity.energy == 0 then
+        return
+    end
+    if not global.computerGuis then
+        global.computerGuis = {}
+    end
     local technology = player.force.technologies["computer-gauntlet-technology"]
 
-    if technology and technology.valid and technology.researched and player.selected and player.selected.type ~= "player" then
-        local distance = getDistance(player.position, player.selected.position)
-        if distance <= 10 and supportedEntity(player.selected) then
+    if technology and technology.valid and technology.researched and entity and entity.type ~= "player" then
+        local distance = getDistance(player.position, entity.position)
+        if distance <= 10 and supportedEntity(entity) then
             if not global.computerGuis[player.index] then
-                computer.new(player.selected):openGui("console", player)
+                computer.new(entity):openGui("console", player)
             else
                 global.computerGuis[player.index]:destroy()
                 global.computerGuis[player.index] = nil
             end
         end
+    end
+end
+
+script.on_event("open-computer", function(event)
+    local player = game.players[event.player_index]
+
+    if player.selected then
+        OpenComputer(player, player.selected)
     end
 end)
 
@@ -216,6 +348,12 @@ script.on_event(defines.events.on_gui_text_changed, OnGuiTextChanged)
 script.on_event(defines.events.on_gui_selection_state_changed, OnGuiSelectionStateChanged)
 script.on_event(defines.events.on_gui_checked_state_changed, OnGuiCheckedStateChanged)
 script.on_event(defines.events.on_gui_elem_changed, OnGuiElemChanged)
+
+script.on_event(defines.events.on_built_entity, OnBuiltEntity)
+script.on_event(defines.events.on_robot_built_entity, OnBuiltEntity)
+script.on_event(defines.events.on_entity_died, OnEntityDied)
+script.on_event(defines.events.on_preplayer_mined_item, OnEntityDied)
+script.on_event(defines.events.on_robot_pre_mined, OnEntityDied)
 
 script.on_event(defines.events.on_player_joined_game, OnPlayerJoinedGame)
 script.on_event(defines.events.on_player_left_game, OnPlayerLeft)
