@@ -9,8 +9,19 @@ table.insert(computer.apis,{
             local handlers = self._events[event_name]
 
             if not handlers then return end
-            for index, callback in pairs(handlers) do
-                callback(...)
+            for index, handler in pairs(handlers) do
+                local fct, err = load(handler.callback, nil, "bt", self.__env)
+                if err then
+                    return self.__getAPI('term').write(err)
+                end
+                local args = handler.args or {}
+                for index, arg in ipairs({...}) do
+                    table.insert(args, arg)
+                end
+                local success, result = pcall(fct, unpack(args))
+                if not success then
+                    return self.__getAPI('term').write(result)
+                end
             end
         end
     },
@@ -34,12 +45,15 @@ table.insert(computer.apis,{
             end
         },
         on = {
-            "wlan.on(event_name, callback) - Register a new handler for the given event",
-            function(self, event_name, callback)
+            "wlan.on(event_name, callback, ...args) - Register a new handler for the given event",
+            function(self, event_name, callback, ...)
                 if not self._events[event_name] then
                     self._events[event_name] = {}
                 end
-                table.insert(self._events[event_name], callback)
+                table.insert(self._events[event_name], {
+                    callback = string.dump(callback),
+                    agrs = {...}
+                })
             end
         }
     }

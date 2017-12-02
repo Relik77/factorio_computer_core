@@ -67,6 +67,7 @@ computer = {
 
                 events = {},
                 apis = {},
+                env = {},
 
                 root = {
                     type = "dir",
@@ -177,12 +178,12 @@ computer = {
         return computers
     end,
 
-    registerEvent = function(self, name, callback)
-        if not self.data.events then self.data.events = {} end
+    registerEmitter = function(self, name, eventEmitter)
+        if not self.data.eventEmitters then self.data.eventEmitters = {} end
 
-        table.insert(self.data.events, {
+        table.insert(self.data.eventEmitters, {
             name = name,
-            callback = callback
+            emitter = eventEmitter
         })
     end,
 
@@ -191,15 +192,138 @@ computer = {
             return
         end
 
-        for index, event in pairs(self.data.events) do
-            if event.name == event_name then
-                event.callback(process, ...)
+        for index, eventEmitter in pairs(self.data.eventEmitters or {}) do
+            if eventEmitter.name == event_name then
+                eventEmitter.emitter:emit(process, ...)
             end
         end
     end,
 
-    clearEvents = function(self)
-        self.data.events = {}
+    clearEmitters = function(self)
+        self.data.eventEmitters = {}
+    end,
+
+    loadApis = function(self, api, item, proxy, env)
+        local player = self:getPlayer()
+        setmetatable(item, {
+            -- protected metatable
+            __index = setmetatable({
+                -- Empty object (this is a proxy to the private properties of the API)
+            }, {
+                -- private properties
+                env = env,
+                computer = self,
+                player = player,
+
+                getters = {
+                    __getAPI = function(self, name)
+                        return self.env.proxies[name]
+                    end,
+                    __getOutput = function(self)
+                        return self.computer.data.output
+                    end,
+                    __setOutput = function(self, text)
+                        self.computer.data.output = text
+                        local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
+                        if gui and gui.print then
+                            gui:print(self.computer.data.output)
+                        end
+                    end,
+                    __getLabel = function(self)
+                        return self.computer.data.label
+                    end,
+                    __setLabel = function(self, label)
+                        self.computer.data.label = label
+                    end,
+                    __getID = function(self)
+                        return table.id(self.computer.data)
+                    end,
+                    __emit = function(self, label, event_name, ...)
+                        for index, computer in pairs(self.computer:getComputers(label)) do
+                            if computer.data and computer.data.process then
+                                computer:raise_event(event_name, computer.data.process, ...)
+                            end
+                        end
+                    end,
+                    __broadcast = function(self, event_name, ...)
+                        for index, computer in pairs(self.computer:getComputers()) do
+                            if computer.data and computer.data.process then
+                                computer:raise_event(event_name, computer.data.process, ...)
+                            end
+                        end
+                    end,
+                    __getWaypoint = function(self, name)
+                        if not global.waypoints then
+                            global.waypoints = {}
+                        end
+                        for index, waypoint in pairs(global.waypoints) do
+                            if waypoint.force == self.player.force and waypoint.name == name then
+                                return waypoint
+                            end
+                        end
+                        return nil
+                    end
+                },
+
+                -- access to private properties
+                __index = function(table, key)
+                    local self = getmetatable(table)
+                    if type(self.getters[key]) == "function" then
+                        return function(...)
+                            return self.getters[key](self, ...)
+                        end
+                    end
+                    return self.getters[key]
+                end,
+
+                -- Set protected metatable 'Read-Only'
+                __newindex = function(self, key)
+                    assert(false, "Can't edit protected metatable")
+                end
+            }),
+
+            -- The API isn't 'Read-Only'
+
+            -- Protect metatable (blocks access to the metatable)
+            __metatable = "this is the protected API " .. api.name
+        })
+
+        setmetatable(proxy, {
+            -- protected metatable
+            __index = setmetatable({
+                -- Empty object (this is a proxy to the private properties of the proxy)
+            }, {
+                -- private properties
+                env = env,
+                api = item,
+                apiPrototype = api,
+
+                -- access to private properties
+                __index = function(tbl, key)
+                    local self = getmetatable(tbl)
+                    assert(self.env.prototypes[self.apiPrototype.name][key], self.apiPrototype.name .. " doesn't have key " .. key)
+                    if type(self.api[key]) == "function" then
+                        return function(...)
+                            return self.api[key](self.api, ...)
+                        end
+                    end
+                    return self.api[key]
+                end,
+
+                -- Set protected metatable 'Read-Only'
+                __newindex = function(self, key)
+                    assert(false, "Can't edit protected metatable")
+                end
+            }),
+
+            -- Set Proxy 'Read-Only'
+            __newindex = function(self, key)
+                assert(false, "Can't edit API " .. self.apiPrototype.name)
+            end,
+
+            -- Protect metatable (blocks access to the metatable)
+            __metatable = "this is the API " .. api.name
+        })
     end,
 
     openGui = function(self, type, player)

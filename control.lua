@@ -26,6 +26,7 @@ baseEnv = {
     table = table,
     string = string,
     math = math,
+    assert = assert,
 
     defines = defines,
 }
@@ -41,10 +42,15 @@ local function raise_event(event_name, event_data)
         elseif data.process ~= nil then
             local item = computer.load(data)
             if item then
-                for index, validate in pairs(data.apis or {}) do
-                    if not validate() then
+                for index, validator in pairs(data.apis or {}) do
+                    if not validator:validate() then
                         item:exec("stop", false)
                         return
+                    end
+                    if not getmetatable(validator.proxy) then
+                        if data.env then
+                            item:loadApis(validator.apiPrototype, validator.api, validator.proxy, data.env)
+                        end
                     end
                 end
                 item:raise_event(event_name, data.process, event_data)
@@ -63,6 +69,42 @@ local function OnTick(event)
     end
 
     raise_event("on_tick", event)
+end
+
+local function stopAllCumputerScripts()
+    if not global.computers then
+        global.computers = {}
+    end
+    game.print("Computer Core: Configuration changed, running scrits need to be stop. Please restart them manually and sorry for inconvenience :/")
+
+    for index, data in pairs(global.computers) do
+        if not data.entity or (not data.entity.valid and not data.entityIsPlayer) then
+            global.computers[index] = nil
+        elseif data.process ~= nil then
+            local item = computer.load(data)
+            if item then
+                item:exec("stop", false)
+            else
+                global.computers[index] = nil
+            end
+        end
+    end
+end
+
+local function OnConfigurationChanged(data)
+    local mod_change = data.mod_changes["computer_core"]
+    if not mod_change then return end
+    if mod_change.old_version == nil or mod_change.new_version == nil then return end
+
+    local old_version = Version(mod_change.old_version)
+    local new_version = Version(mod_change.new_version)
+
+    if new_version:isLower(old_version) then
+        return stopAllCumputerScripts()
+    end
+    if old_version:isLower("1.2.1") and not new_version:isLower("1.2.1") then
+        return stopAllCumputerScripts()
+    end
 end
 
 local function OnGuiClick(event)
@@ -342,6 +384,7 @@ script.on_event("open-computer", function(event)
 end)
 
 script.on_event(defines.events.on_tick, OnTick)
+script.on_configuration_changed(OnConfigurationChanged)
 
 script.on_event(defines.events.on_gui_click, OnGuiClick)
 script.on_event(defines.events.on_gui_text_changed, OnGuiTextChanged)

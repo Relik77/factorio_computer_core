@@ -35,7 +35,7 @@ table.insert(computer.apis,{
                     end
                 else
                     for key, value in pairs(combinator.get_or_create_control_behavior().parameters.parameters) do
-                        if value.signal and value.signal.name and value.count > 0 then
+                        if value.signal and value.signal.name and type(value.count) == "number" then
                             if not signals[value.signal.name] then
                                 signals[value.signal.name] = {
                                     signal = value.signal,
@@ -109,6 +109,7 @@ table.insert(computer.apis,{
 
                 local combinator = struct.sub.left_combinator
                 if not combinator then return end
+                assert(signals, "lan.writeLeftSignal(signals) : `signals` cannot be nil")
 
                 self:_writeCombinatorSignal(combinator, signals)
             end
@@ -120,6 +121,7 @@ table.insert(computer.apis,{
 
                 local combinator = struct.sub.right_combinator
                 if not combinator then return end
+                assert(signals, "lan.writeRightSignals(signals) : `signals` cannot be nil")
 
                 self:_writeCombinatorSignal(combinator, signals)
             end

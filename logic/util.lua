@@ -258,6 +258,59 @@ function table.id(obj)
     return id
 end
 
+function Version(value)
+    local function parse(str)
+        local version = {}
+        for i, v in pairs(str:split(".")) do
+            table.insert(version, tonumber(v))
+        end
+        return version
+    end
+
+    local obj = {
+        value = parse(value),
+        isLower = function(self, version)
+            if type(version) == "string" then
+                version = Version(version)
+            end
+            for i, v in ipairs(version.value) do
+                if i > #self.value then
+                    return true
+                elseif v > self.value[i] then
+                    return true
+                elseif v < self.value[i] then
+                    return false
+                end
+            end
+            return false
+        end,
+        isHigher = function(self, version)
+            if type(version) == "string" then
+                version = Version(version)
+            end
+            for i, v in ipairs(self.value) do
+                if i > #version.value then
+                    return true
+                elseif v > version.value[i] then
+                    return true
+                elseif v < version.value[i] then
+                    return false
+                end
+            end
+            return false
+        end,
+        tostring = function(self)
+            return table.concat(self.value, ".")
+        end
+    }
+    return obj
+end
+function version_isLower(currentVersion, otherVersion)
+    currentVersion = currentVersion:split(".")
+    otherVersion = otherVersion.split(".")
+
+end
+
 function deepcopy(orig, dst)
     local copy
 
