@@ -581,10 +581,9 @@ computer.commands = {
                     };
                     table.insert(fs.apis, validator)
 
-                    local item = env.apis[api.name]
                     local player = self:getPlayer()
-                    if not item then
-                        item = setmetatable({
+                    if not env.apis[api.name] then
+                        env.apis[api.name], env.proxies[api.name] = self:loadApis(api, {
                             -- public properties
                             __name = api.name,
                             __entity = fs.entity,
@@ -597,136 +596,14 @@ computer.commands = {
                                 return game.tick
                             end
                         }, {
-                            -- protected metatable
-                            __index = setmetatable({
-                                -- Empty object (this is a proxy to the private properties of the API)
-                            }, {
-                                -- private properties
-                                env = env,
-                                computer = self,
-                                player = player,
-
-                                getters = {
-                                    __getAPI = function(self, name)
-                                        return self.env.proxies[name]
-                                    end,
-                                    __getOutput = function(self)
-                                        return self.computer.data.output
-                                    end,
-                                    __setOutput = function(self, text)
-                                        self.computer.data.output = text
-                                        local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
-                                        if gui and gui.print then
-                                            gui:print(self.computer.data.output)
-                                        end
-                                    end,
-                                    __getLabel = function(self)
-                                        return self.computer.data.label
-                                    end,
-                                    __setLabel = function(self, label)
-                                        self.computer.data.label = label
-                                    end,
-                                    __getID = function(self)
-                                        return table.id(self.computer.data)
-                                    end,
-                                    __emit = function(self, label, event_name, ...)
-                                        for index, computer in pairs(self.computer:getComputers(label)) do
-                                            if computer.data and computer.data.process then
-                                                computer:raise_event(event_name, computer.data.process, ...)
-                                            end
-                                        end
-                                    end,
-                                    __broadcast = function(self, event_name, ...)
-                                        for index, computer in pairs(self.computer:getComputers()) do
-                                            if computer.data and computer.data.process then
-                                                computer:raise_event(event_name, computer.data.process, ...)
-                                            end
-                                        end
-                                    end,
-                                    __getWaypoint = function(self, name)
-                                        if not global.waypoints then
-                                            global.waypoints = {}
-                                        end
-                                        for index, waypoint in pairs(global.waypoints) do
-                                            if waypoint.force == self.player.force and waypoint.name == name then
-                                                return waypoint
-                                            end
-                                        end
-                                        return nil
-                                    end
-                                },
-
-                                -- access to private properties
-                                __index = function(table, key)
-                                    local self = getmetatable(table)
-                                    if type(self.getters[key]) == "function" then
-                                        return function(...)
-                                            return self.getters[key](self, ...)
-                                        end
-                                    end
-                                    return self.getters[key]
-                                end,
-
-                                -- Set protected metatable 'Read-Only'
-                                __newindex = function(self, key)
-                                    assert(false, "Can't edit protected metatable")
-                                end
-                            }),
-
-                            -- The API isn't 'Read-Only'
-
-                            -- Protect metatable (blocks access to the metatable)
-                            __metatable = "this is the API " .. api.name
-                        })
-
-                        env.apis[api.name] = item
-                        env.proxies[api.name] = setmetatable({
                             -- Empty object (its a proxy to protected API)
-                        }, {
-                            -- protected metatable
-                            __index = setmetatable({
-                                -- Empty object (this is a proxy to the private properties of the proxy)
-                            }, {
-                                -- private properties
-                                env = env,
-                                api = item,
-                                apiPrototype = api,
-
-                                -- access to private properties
-                                __index = function(tbl, key)
-                                    local self = getmetatable(tbl)
-                                    assert(self.env.prototypes[self.apiPrototype.name][key], self.apiPrototype.name .. " doesn't have key " .. key)
-                                    if type(self.api[key]) == "function" then
-                                        return function(...)
-                                            return self.api[key](self.api, ...)
-                                        end
-                                    end
-                                    return self.api[key]
-                                end,
-
-                                -- Set protected metatable 'Read-Only'
-                                __newindex = function(self, key)
-                                    assert(false, "Can't edit protected metatable")
-                                end
-                            }),
-
-                            -- Set Proxy 'Read-Only'
-                            __newindex = function(self, key)
-                                assert(false, "Can't edit API " .. self.apiPrototype.name)
-                            end,
-
-                            -- Protect metatable (blocks access to the metatable)
-                            __metatable = "this is the API " .. api.name
-                        })
-
-                        validator.api = item
-                        validator.proxy = env.proxies[api.name]
+                        }, env)
                     end
 
                     if not env.prototypes[api.name] then env.prototypes[api.name] = {} end
                     for index, value in pairs(api.prototype or {}) do
                         if type(index) == "string" then
-                            item[index] = deepcopy(value[2])
+                            env.apis[api.name][index] = deepcopy(value[2])
                             if not index:startsWith("_") then
                                 env.prototypes[api.name][index] = true
                             end
@@ -737,7 +614,7 @@ computer.commands = {
                             local eventEmitter = {
                                 processId = table.id(env),
                                 computer = self,
-                                api = item,
+                                api = env.apis[api.name],
                                 callback = callback,
                                 emit = function(self, process, event, ...)
                                     if process == self.processId then
@@ -751,8 +628,8 @@ computer.commands = {
                             self:registerEmitter(event_name, eventEmitter)
                         end
                     end
-                    if type(item.__init) == "function" then
-                        local success, result = pcall(item.__init, item)
+                    if type(env.apis[api.name].__init) == "function" then
+                        local success, result = pcall(env.apis[api.name].__init, env.apis[api.name])
                         if not success then
                             return "Error:\n" .. result
                         end

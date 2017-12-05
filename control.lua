@@ -47,9 +47,9 @@ local function raise_event(event_name, event_data)
                         item:exec("stop", false)
                         return
                     end
-                    if not getmetatable(validator.proxy) then
+                    if not getmetatable(data.env.proxies[validator.apiPrototype.name]) then
                         if data.env then
-                            item:loadApis(validator.apiPrototype, validator.api, validator.proxy, data.env)
+                            item:loadApis(validator.apiPrototype, data.env.apis[validator.apiPrototype.name], data.env.proxies[validator.apiPrototype.name], data.env)
                         end
                     end
                 end

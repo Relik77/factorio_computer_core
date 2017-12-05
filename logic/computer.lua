@@ -324,6 +324,8 @@ computer = {
             -- Protect metatable (blocks access to the metatable)
             __metatable = "this is the API " .. api.name
         })
+
+        return item, proxy
     end,
 
     openGui = function(self, type, player)
