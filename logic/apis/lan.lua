@@ -18,12 +18,15 @@ table.insert(computer.apis,{
                 local network
 
                 if wire then
+                    if type(wire) == "string" then
+                        wire = defines.wire_type[wire]
+                    end
                     network = combinator.get_circuit_network(wire)
                 end
 
                 if network and network.signals then
                     for key, value in pairs(network.signals) do
-                        if value.signal and value.signal.name and value.count > 0 then
+                        if value.signal and value.signal.name and type(value.count) == "number" then
                             if not signals[value.signal.name] then
                                 signals[value.signal.name] = {
                                     signal = value.signal,

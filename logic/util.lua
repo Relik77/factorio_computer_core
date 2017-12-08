@@ -19,7 +19,7 @@ function isResearched(name)
 end
 
 function getDistance(pos1, pos2)
-    return math.sqrt((pos2.x - pos1.x)^2 + (pos2.y - pos1.y)^2)
+    return math.sqrt((pos2.x - pos1.x) ^ 2 + (pos2.y - pos1.y) ^ 2)
 end
 
 function equipmentGridHasItem(grid, itemName)
@@ -70,8 +70,8 @@ end
 function searchIndexInTable(table, obj, ...)
     if table then
         for i, v in pairs(table) do
-            if #{...} > 0 then
-                for key, field in pairs({...}) do
+            if #{ ... } > 0 then
+                for key, field in pairs({ ... }) do
                     if v then
                         v = v[field]
                     end
@@ -89,9 +89,9 @@ end
 function searchInTable(table, obj, ...)
     if table then
         for k, v in pairs(table) do
-            if #{...} > 0 then
+            if #{ ... } > 0 then
                 local key = v
-                for i, field in pairs({...}) do
+                for i, field in pairs({ ... }) do
                     if key then
                         key = key[field]
                     end
@@ -120,14 +120,18 @@ end
 
 function callInGlobal(gName, kName, ...)
     if global[gName] then
-        for k,v in pairs(global[gName]) do
-            if v[kName] then v[kName](v, ...) end
+        for k, v in pairs(global[gName]) do
+            if v[kName] then
+                v[kName](v, ...)
+            end
         end
     end
 end
 
 function insertInGlobal(gName, val)
-    if not global[gName] then global[gName] = {} end
+    if not global[gName] then
+        global[gName] = {}
+    end
     table.insert(global[gName], val)
     return val
 end
@@ -181,13 +185,13 @@ function string:split(sSeparator, nMax, bRegexp)
         nMax = nMax or -1
 
         local nField, nStart = 1, 1
-        local nFirst,nLast = self:find(sSeparator, nStart, bPlain)
+        local nFirst, nLast = self:find(sSeparator, nStart, bPlain)
         while nFirst and nMax ~= 0 do
-            aRecord[nField] = self:sub(nStart, nFirst-1)
-            nField = nField+1
-            nStart = nLast+1
-            nFirst,nLast = self:find(sSeparator, nStart, bPlain)
-            nMax = nMax-1
+            aRecord[nField] = self:sub(nStart, nFirst - 1)
+            nField = nField + 1
+            nStart = nLast + 1
+            nFirst, nLast = self:find(sSeparator, nStart, bPlain)
+            nMax = nMax - 1
             count = count + 1
         end
         aRecord[nField] = self:sub(nStart)
@@ -204,40 +208,81 @@ function table.len(tbl)
     return count
 end
 
-function table.val_to_str ( v )
-    if "string" == type( v ) then
-        v = string.gsub( v, "\n", "\\n" )
-        if string.match( string.gsub(v,"[^'\"]",""), '^"+$' ) then
-            return "'" .. v .. "'"
-        end
-        return '"' .. string.gsub(v,'"', '\\"' ) .. '"'
-    else
-        return "table" == type( v ) and table.tostring( v ) or
-                tostring( v )
+function table.tostring(tbl, limit)
+    local tableToString
+    local valToString
+    local keyToString
+    if not limit then
+        limit = 2
     end
-end
 
-function table.key_to_str ( k )
-    if "string" == type( k ) and string.match( k, "^[_%a][_%a%d]*$" ) then
-        return k
-    else
-        return "[" .. table.val_to_str( k ) .. "]"
-    end
-end
-
-function table.tostring( tbl )
-    local result, done = {}, {}
-    for k, v in ipairs( tbl ) do
-        table.insert( result, table.val_to_str( v ) )
-        done[ k ] = true
-    end
-    for k, v in pairs( tbl ) do
-        if not done[ k ] then
-            table.insert( result,
-                table.key_to_str( k ) .. "=" .. table.val_to_str( v ) )
+    valToString = function(v, circular, max)
+        if "string" == type(v) then
+            v = string.gsub( v, "\n", "\\n" )
+            if string.match( string.gsub(v, "[^'\"]", ""), '^"+$' ) then
+                return "'" .. v .. "'"
+            end
+            return '"' .. string.gsub(v, '"', '\\"' ) .. '"'
+        else
+            if max ~= 0 then
+                circular = {table.unpack(circular)}
+                table.insert(circular, v)
+                return "table" == type(v) and tableToString(v, circular, max - 1) or tostring(v)
+            end
+            return "[Table]"
         end
     end
-    return "{" .. table.concat( result, "," ) .. "}"
+    keyToString = function(k, circular, max)
+        if "string" == type(k) and string.match( k, "^[_%a][_%a%d]*$" ) then
+            return k
+        else
+            return "[" .. valToString(k, circular, max) .. "]"
+        end
+    end
+    tableToString = function(tbl, circular, max)
+        local result, done = {}, {}
+
+        for k, v in ipairs(tbl) do
+            if type(v) == "table" then
+                for index, item in ipairs(circular) do
+                    if v == item then
+                        table.insert(result, "[Circular]")
+                        done[k] = true
+                        break
+                    end
+                end
+            end
+            if not done[k] then
+                done[k] = true
+                if type(v) == "table" then
+                    table.insert(circular, v)
+                end
+                table.insert(result, valToString(v, circular, max))
+            end
+        end
+        for k, v in pairs(tbl) do
+            if not done[k] then
+                if type(v) == "table" then
+                    for index, item in ipairs(circular) do
+                        if v == item then
+                            table.insert(result, keyToString(k, max) .. "=" .. "[Circular]")
+                            done[k] = true
+                            break
+                        end
+                    end
+                end
+                if not done[k] then
+                    if type(v) == "table" then
+                        table.insert(circular, v)
+                    end
+                    table.insert(result, keyToString(k, max) .. "=" .. valToString(v, circular, max))
+                end
+            end
+        end
+        return "{" .. table.concat(result, "," ) .. "}"
+    end
+
+    return tableToString(tbl, {}, limit)
 end
 
 function table.contains(tab, obj, field)

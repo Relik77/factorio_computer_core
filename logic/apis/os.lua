@@ -93,6 +93,16 @@ table.insert(computer.apis,{
                     args = {...}
                 })
             end
+        },
+        require = {
+            "os.require(filepath) - load and run library file",
+            function(self, filepath)
+                assert(type(filepath) == "string", "'os.require' require a filepath")
+                assert(filepath ~= ".", "Unable to require directory '.'")
+                assert(filepath ~= "..", "Unable to require directory '..'")
+
+                return self.__require(filepath)
+            end
         }
     }
 })

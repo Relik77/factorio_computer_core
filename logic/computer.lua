@@ -203,7 +203,7 @@ computer = {
         self.data.eventEmitters = {}
     end,
 
-    loadApis = function(self, api, item, proxy, env)
+    loadAPI = function(self, api, item, proxy, env)
         local player = self:getPlayer()
         setmetatable(item, {
             -- protected metatable
@@ -262,6 +262,45 @@ computer = {
                             end
                         end
                         return nil
+                    end,
+                    __getGameTick = function()
+                        return game.tick
+                    end,
+                    __require = function(self, filename)
+                        local file = self.env.file.parent
+
+                        assert(type(filename) == "string")
+                        assert(filename ~= ".")
+                        assert(filename ~= "..")
+
+                        if filename:startsWith("/") then
+                            file = self.computer.data.root
+                        end
+
+                        for index, _dirname in pairs(filename:split("/")) do
+                            if _dirname ~= "" then
+                                assert(file.type == "dir", filename .. " isn't a directory")
+                                assert(file.files[_dirname] ~= nil, filename .. " no such file or directory")
+                                file = file.files[_dirname]
+                            end
+                        end
+                        assert(file.type == "file", filename .. " isn't a file")
+
+                        game.print(table.tostring(self.env.filesLoaded))
+                        for index, lib in ipairs(self.env.filesLoaded) do
+                            if lib.file == file then
+                                return lib.result
+                            end
+                        end
+                        file.atime = game.tick;
+
+                        local fct, err = load(file.text, nil, "t", self.env.proxies)
+                        assert(err == nil, err)
+                        local success, result = pcall(fct)
+                        assert(success == true, result)
+
+                        table.insert(self.env.filesLoaded, {file = file, result = result})
+                        return result
                     end
                 },
 

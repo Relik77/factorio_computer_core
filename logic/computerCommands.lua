@@ -565,7 +565,9 @@ computer.commands = {
                 apis = {},
                 prototypes = {},
                 proxies = {
-                }
+                },
+                file = file,
+                filesLoaded = {}
             };
             fs.apis = {};
             fs.env = env;
@@ -583,18 +585,13 @@ computer.commands = {
 
                     local player = self:getPlayer()
                     if not env.apis[api.name] then
-                        env.apis[api.name], env.proxies[api.name] = self:loadApis(api, {
+                        env.apis[api.name], env.proxies[api.name] = self:loadAPI(api, {
                             -- public properties
                             __name = api.name,
                             __entity = fs.entity,
                             __entityStructure = searchInTable(global.structures, fs.entity, 'entity'),
                             __player = player,
                             __env = env.proxies,
-
-                            -- public methods
-                            __getGameTick = function()
-                                return game.tick
-                            end
                         }, {
                             -- Empty object (its a proxy to protected API)
                         }, env)
@@ -660,6 +657,7 @@ computer.commands = {
                 self:exec("stop", false)
                 self.data.output = self.data.output .. "Error:\n" .. result
             end
+            table.insert(env.filesLoaded, {file = file, result = result})
             self.gui:print(self.data.output)
         end
     },
