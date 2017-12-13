@@ -8,7 +8,8 @@ data:extend({
         order = "g[computer]-a[computer-item]",
         stack_size = 10,
         place_result = "computer-entity",
-        default_request_amount = 1
+        default_request_amount = 1,
+        icon_size = 32
     }
 })
 

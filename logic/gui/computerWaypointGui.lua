@@ -236,7 +236,6 @@ computer.guis["waypoint"] = {
             type = "frame",
             name = self.prefix .. "rootFrame",
             caption = "Waypoints",
-            style = "frame_style",
             direction = "vertical",
         })
         elts.root.style.minimal_width = 800
@@ -248,21 +247,21 @@ computer.guis["waypoint"] = {
         elts.body = elts.root.add({
             type = "table",
             name = self.prefix .. "body",
-            colspan = 2
+            column_count = 2
         })
 
         -- Form
         elts.waypointForm = elts.body.add({
             type = "table",
             name = self.prefix .. "waypointForm",
-            colspan = 1
+            column_count = 1
         })
 
         -- Form Caption
         elts.waypointFormCaption = elts.waypointForm.add({
             type = "table",
             name = self.prefix .. "waypointForm",
-            colspan = 2
+            column_count = 2
         })
 
 
@@ -291,7 +290,7 @@ computer.guis["waypoint"] = {
         elts.waypointFormContent = elts.waypointForm.add({
             type = "table",
             name = self.prefix .. "waypointFormContent",
-            colspan = 2
+            column_count = 2
         })
         elts.waypointFormContent.style.top_padding = 60
 
@@ -350,7 +349,7 @@ computer.guis["waypoint"] = {
         elts.waypointFormFooter = elts.waypointForm.add({
             type = "table",
             name = self.prefix .. "waypointFormFooter",
-            colspan = 2
+            column_count = 2
         })
         elts.waypointFormFooter.style.left_padding = 230
         elts.waypointFormFooter.style.top_padding = 160
@@ -391,7 +390,7 @@ computer.guis["waypoint"] = {
         elts.footer = elts.root.add({
             type = "table",
             name = self.prefix .. "footer",
-            colspan = 1
+            column_count = 1
         })
         elts.footer.style.left_padding = 690
 

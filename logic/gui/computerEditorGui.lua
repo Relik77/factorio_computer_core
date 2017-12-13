@@ -73,7 +73,6 @@ computer.guis["editor"] = {
             type = "frame",
             name = self.prefix .. "rootFrame",
             caption = "File Editor",
-            style = "frame_style",
             direction = "vertical",
         })
         elts.root.style.minimal_width = 800
@@ -98,7 +97,7 @@ computer.guis["editor"] = {
         elts.footer = elts.root.add({
             type = "table",
             name = self.prefix .. "footer",
-            colspan = 3
+            column_count = 3
         })
 
         elts.input = elts.footer.add({

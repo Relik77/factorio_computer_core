@@ -188,9 +188,10 @@ computer = {
     end,
 
     raise_event = function(self, event_name, process, ...)
-        if self.data.entity.electric_buffer_size and self.data.entity.energy == 0 then
-            return
-        end
+        -- TODO v0.16 bug, waiting Factorio patch
+        --if self.data.entity.electric_buffer_size and self.data.entity.energy == 0 then
+        --    return
+        --end
 
         for index, eventEmitter in pairs(self.data.eventEmitters or {}) do
             if eventEmitter.name == event_name then

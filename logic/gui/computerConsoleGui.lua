@@ -87,7 +87,6 @@ computer.guis["console"] = {
             type = "frame",
             name = self.prefix .. "rootFrame",
             caption = "Computer console",
-            style = "frame_style",
             direction = "vertical",
         })
         elts.root.style.minimal_width = 800

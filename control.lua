@@ -354,9 +354,10 @@ local function supportedEntity(entity)
 end
 
 local function OpenComputer(player, entity)
-    if entity.electric_buffer_size and entity.energy == 0 then
-        return
-    end
+    -- TODO v0.16 bug, waiting Factorio patch
+    --if entity.electric_buffer_size and entity.energy == 0 then
+    --    return
+    --end
     if not global.computerGuis then
         global.computerGuis = {}
     end
@@ -395,7 +396,7 @@ script.on_event(defines.events.on_gui_elem_changed, OnGuiElemChanged)
 script.on_event(defines.events.on_built_entity, OnBuiltEntity)
 script.on_event(defines.events.on_robot_built_entity, OnBuiltEntity)
 script.on_event(defines.events.on_entity_died, OnEntityDied)
-script.on_event(defines.events.on_preplayer_mined_item, OnEntityDied)
+script.on_event(defines.events.on_pre_player_mined_item, OnEntityDied)
 script.on_event(defines.events.on_robot_pre_mined, OnEntityDied)
 
 script.on_event(defines.events.on_player_joined_game, OnPlayerJoinedGame)

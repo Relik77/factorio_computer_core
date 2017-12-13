@@ -7,7 +7,8 @@ data:extend({
         subgroup = "equipment",
         order = "g[computer-gauntlet]-a[computer-gauntlet-item]",
         stack_size = 1,
-        default_request_amount = 1
+        default_request_amount = 1,
+        icon_size = 32
     }
 })
 
