@@ -7,7 +7,7 @@ data:extend({
         subgroup = "circuit-network",
         order = "g[computer]-a[computer-item]",
         stack_size = 10,
-        place_result = "computer-entity",
+        place_result = "computer-interface-entity",
         default_request_amount = 1,
         icon_size = 32
     }

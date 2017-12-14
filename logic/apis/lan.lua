@@ -4,7 +4,10 @@ table.insert(computer.apis,{
     name = "lan",
     description = "The LAN API provides functions to communicate using circuit network",
     entities = function(entity)
-        if entity.name == "computer-entity" then
+        local match = {string.match(entity.name, "^(.*)(computer[-_]interface)(.*)$")}
+        if #match == 3
+           and (match[1] == "" or match[1]:sub(-1) == "-" or match[1]:sub(-1) == "_")
+           and (match[3] == "" or match[3]:sub(1, 1) == "-" or match[3]:sub(1, 1) == "_") then
             return true
         end
         return false

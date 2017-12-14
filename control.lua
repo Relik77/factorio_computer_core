@@ -31,6 +31,58 @@ baseEnv = {
     defines = defines,
 }
 
+local function struct_create_or_revive(entity_type, surface, area, position, force)
+    local found_ghost = false
+    local ghosts = surface.find_entities_filtered {
+        area = area,
+        name = "entity-ghost",
+        force = force }
+    for _, each_ghost in pairs(ghosts) do
+        if each_ghost.valid and each_ghost.ghost_name == entity_type then
+            if found_ghost then
+                each_ghost.destroy()
+            else
+                each_ghost.revive()
+                if not each_ghost.valid then
+                    found_ghost = true
+                else
+                    each_ghost.destroy()
+                end
+            end
+        end
+    end
+
+    if found_ghost then
+        local entity = surface.find_entities_filtered {
+            area = area,
+            name = entity_type,
+            force = force,
+            limit = 1
+        }[1]
+        if entity then
+            entity.direction = defines.direction.south
+            entity.teleport(position)
+            return entity
+        end
+    else
+        local reals = surface.find_entities_filtered {
+            area = area,
+            name = entity_type,
+            limit = 1
+        }
+        if #reals == 1 then
+            return reals[1]
+        end
+
+        return surface.create_entity {
+            name = entity_type,
+            position = position,
+            force = force,
+            fast_replace = true
+        }
+    end
+end
+
 local function raise_event(event_name, event_data)
     if not global.computers then
         global.computers = {}
@@ -95,10 +147,34 @@ local function OnConfigurationChanged(data)
     local mod_change = data.mod_changes["computer_core"]
     if not mod_change then return end
     if mod_change.old_version == nil or mod_change.new_version == nil then return end
+    if not global.computers then global.computers = {} end
+    if not global.structures then global.structures = {} end
 
     local old_version = Version(mod_change.old_version)
     local new_version = Version(mod_change.new_version)
 
+    if old_version:isLower("1.3.1") and not new_version:isLower("1.3.1") then
+        -- Computer Entity Type Changed
+        for index, struct in pairs(global.structures) do
+            if struct.type == "computer" then
+                for index, data in pairs(global.computers) do
+                    if data.entity == struct.entity then
+                        game.print("Process ? " .. data.process)
+                        local entity = data.entity
+                        struct.entity = struct_create_or_revive(
+                        "computer-interface-entity",
+                        data.entity.surface, -- surface
+                        { { data.entity.position.x - 1, data.entity.position.y - 1 }, { data.entity.position.x + 1, data.entity.position.y + 1 } }, -- ghost search area
+                        data.entity.position, -- position
+                        data.entity.force
+                        )
+                        data.entity = struct.entity
+                        entity.destroy()
+                    end
+                end
+            end
+        end
+    end
     if new_version:isLower(old_version) then
         return stopAllCumputerScripts()
     end
@@ -179,58 +255,6 @@ local function OnGuiElemChanged(event)
     end
 end
 
-local function struct_create_or_revive(entity_type, surface, area, position, force)
-    local found_ghost = false
-    local ghosts = surface.find_entities_filtered {
-        area = area,
-        name = "entity-ghost",
-        force = force }
-    for _, each_ghost in pairs(ghosts) do
-        if each_ghost.valid and each_ghost.ghost_name == entity_type then
-            if found_ghost then
-                each_ghost.destroy()
-            else
-                each_ghost.revive()
-                if not each_ghost.valid then
-                    found_ghost = true
-                else
-                    each_ghost.destroy()
-                end
-            end
-        end
-    end
-
-    if found_ghost then
-        local entity = surface.find_entities_filtered {
-            area = area,
-            name = entity_type,
-            force = force,
-            limit = 1
-        }[1]
-        if entity then
-            entity.direction = defines.direction.south
-            entity.teleport(position)
-            return entity
-        end
-    else
-        local reals = surface.find_entities_filtered {
-            area = area,
-            name = entity_type,
-            limit = 1
-        }
-        if #reals == 1 then
-            return reals[1]
-        end
-
-        return surface.create_entity {
-            name = entity_type,
-            position = position,
-            force = force,
-            fast_replace = true
-        }
-    end
-end
-
 local function OnBuiltEntity(event)
     local entity = event.created_entity
 
@@ -241,7 +265,7 @@ local function OnBuiltEntity(event)
         global.structures = {}
     end
 
-    if entity.name == "computer-entity" then
+    if entity.name == "computer-interface-entity" then
         local struct = {
             type = "computer",
             entity = entity,
@@ -331,7 +355,7 @@ local function supportedEntity(entity)
     if not entity then
         return false
     end
-    if entity.name == "computer-entity" then
+    if entity.name == "computer-interface-entity" then
         return true
     end
     for index, api in pairs(computer.apis) do
@@ -354,10 +378,9 @@ local function supportedEntity(entity)
 end
 
 local function OpenComputer(player, entity)
-    -- TODO v0.16 bug, waiting Factorio patch
-    --if entity.electric_buffer_size and entity.energy == 0 then
-    --    return
-    --end
+    if entity.electric_buffer_size and entity.energy == 0 then
+        return
+    end
     if not global.computerGuis then
         global.computerGuis = {}
     end
