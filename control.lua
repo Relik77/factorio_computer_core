@@ -127,7 +127,6 @@ local function stopAllCumputerScripts()
     if not global.computers then
         global.computers = {}
     end
-    game.print("Computer Core: Configuration changed, running scrits need to be stop. Please restart them manually and sorry for inconvenience :/")
 
     for index, data in pairs(global.computers) do
         if not data.entity or (not data.entity.valid and not data.entityIsPlayer) then
@@ -153,13 +152,21 @@ local function OnConfigurationChanged(data)
     local old_version = Version(mod_change.old_version)
     local new_version = Version(mod_change.new_version)
 
+    if new_version:isLower(old_version) then
+        game.print("Computer Core: WARNING, current version is lower previous version. This can lead to risky behavior. All scripts were stopped for security.")
+        return stopAllCumputerScripts()
+    end
+    if old_version:isLower("1.2.1") and not new_version:isLower("1.2.1") then
+        game.print("Computer Core: Configuration changed, running scrits need to be stop. Please restart them manually and sorry for inconvenience :/")
+        stopAllCumputerScripts()
+    end
     if old_version:isLower("1.3.1") and not new_version:isLower("1.3.1") then
         -- Computer Entity Type Changed
         for index, struct in pairs(global.structures) do
             if struct.type == "computer" then
                 for index, data in pairs(global.computers) do
                     if data.entity == struct.entity then
-                        game.print("Process ? " .. data.process)
+                        -- Update Entity
                         local entity = data.entity
                         struct.entity = struct_create_or_revive(
                         "computer-interface-entity",
@@ -170,16 +177,26 @@ local function OnConfigurationChanged(data)
                         )
                         data.entity = struct.entity
                         entity.destroy()
+
+                        if data.process then
+                            -- Update validator
+                            for index, validator in pairs(data.apis or {}) do
+                                validator.entity = data.entity
+                                if validator.apiPrototype.name == "lan" then
+                                    for _, api in pairs(computer.apis) do
+                                        if api.name == "lan" then
+                                            validator.apiPrototype = api
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        break
                     end
                 end
             end
         end
-    end
-    if new_version:isLower(old_version) then
-        return stopAllCumputerScripts()
-    end
-    if old_version:isLower("1.2.1") and not new_version:isLower("1.2.1") then
-        return stopAllCumputerScripts()
     end
 end
 
