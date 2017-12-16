@@ -10,102 +10,6 @@ function removeData(key, data)
     global["data:" .. key] = data
 end
 
-function setResearch(name)
-    global["research:" .. name] = true
-end
-
-function isResearched(name)
-    return global["research:" .. name] or false
-end
-
-function getDistance(pos1, pos2)
-    return math.sqrt((pos2.x - pos1.x) ^ 2 + (pos2.y - pos1.y) ^ 2)
-end
-
-function equipmentGridHasItem(grid, itemName)
-    local contents = grid.get_contents()
-    return contents[itemName] and contents[itemName] > 0
-end
-
-function string:padRight(len, char)
-    local str = self
-    if not char then
-        char = " "
-    end
-
-    if str:len() < len then
-        str = str .. string.rep(" ", len - str:len())
-    end
-
-    return str
-end
-
-function string:contains(substr)
-    return self:find(substr) ~= nil
-end
-
-function toDate(ticks)
-    local time = ""
-    local mod = 0
-    ticks = ticks / 60
-
-    local timeRange = function(time, unit)
-        time = math.floor(time % unit)
-        if time < 10 then
-            time = "0" .. time
-        end
-
-        return time
-    end
-
-    time = timeRange(ticks, 60)
-    ticks = ticks / 60
-    time = timeRange(ticks, 60) .. ":" .. time
-    ticks = ticks / 60
-    time = math.floor(ticks) .. ":" .. time
-
-    return time
-end
-
-function searchIndexInTable(table, obj, ...)
-    if table then
-        for i, v in pairs(table) do
-            if #{ ... } > 0 then
-                for key, field in pairs({ ... }) do
-                    if v then
-                        v = v[field]
-                    end
-                end
-                if v == obj then
-                    return i
-                end
-            elseif v == obj then
-                return i
-            end
-        end
-    end
-end
-
-function searchInTable(table, obj, ...)
-    if table then
-        for k, v in pairs(table) do
-            if #{ ... } > 0 then
-                local key = v
-                for i, field in pairs({ ... }) do
-                    if key then
-                        key = key[field]
-                    end
-                end
-                if key == obj then
-                    return v
-                end
-            elseif v == obj then
-                return v
-            end
-        end
-    end
-end
-
 function checkAndTickInGlobal(name)
     if global[name] then
         for i, v in pairs(global[name]) do
@@ -145,6 +49,63 @@ function removeInGlobal(gName, val)
             end
         end
     end
+end
+
+function setResearch(name)
+    global["research:" .. name] = true
+end
+
+function isResearched(name)
+    return global["research:" .. name] or false
+end
+
+function getDistance(pos1, pos2)
+    return math.sqrt((pos2.x - pos1.x) ^ 2 + (pos2.y - pos1.y) ^ 2)
+end
+
+function equipmentGridHasItem(grid, itemName)
+    local contents = grid.get_contents()
+    return contents[itemName] and contents[itemName] > 0
+end
+
+function toDate(ticks)
+    local time = ""
+    local mod = 0
+    ticks = ticks / 60
+
+    local timeRange = function(time, unit)
+        time = math.floor(time % unit)
+        if time < 10 then
+            time = "0" .. time
+        end
+
+        return time
+    end
+
+    time = timeRange(ticks, 60)
+    ticks = ticks / 60
+    time = timeRange(ticks, 60) .. ":" .. time
+    ticks = ticks / 60
+    time = math.floor(ticks) .. ":" .. time
+
+    return time
+end
+
+function string:padRight(len, char)
+    local str = self
+    if not char then
+        char = " "
+    end
+
+    if str:len() < len then
+        str = str .. string.rep(" ", len - str:len())
+    end
+
+    return str
+end
+
+function string:contains(substr)
+    return self:find(substr) ~= nil
 end
 
 function string:startsWith(prefix)
@@ -199,6 +160,48 @@ function string:split(sSeparator, nMax, bRegexp)
 
     return aRecord, count
 end
+
+function searchIndexInTable(table, obj, ...)
+    if table then
+        for i, v in pairs(table) do
+            if #{ ... } > 0 then
+                for key, field in pairs({ ... }) do
+                    if v then
+                        v = v[field]
+                    end
+                end
+                if v == obj then
+                    return i
+                end
+            elseif v == obj then
+                return i
+            end
+        end
+    end
+end
+
+function searchInTable(table, obj, ...)
+    if table then
+        for k, v in pairs(table) do
+            if #{ ... } > 0 then
+                local key = v
+                for i, field in pairs({ ... }) do
+                    if key then
+                        key = key[field]
+                    end
+                end
+                if key == obj then
+                    return v
+                end
+            elseif v == obj then
+                return v
+            end
+        end
+    end
+end
+
+table.search = searchInTable
+table.searchIndex = searchIndexInTable
 
 function table.len(tbl)
     local count = 0

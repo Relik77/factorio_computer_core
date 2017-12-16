@@ -13,6 +13,7 @@ require("logic.apis.term")
 require("logic.apis.os")
 require("logic.apis.lan")
 require("logic.apis.wlan")
+require("logic.apis.speaker")
 
 baseEnv = {
     ipairs = ipairs,
@@ -167,7 +168,16 @@ local function OnConfigurationChanged(data)
                 for index, data in pairs(global.computers) do
                     if data.entity == struct.entity then
                         -- Update Entity
-                        local entity = data.entity
+                        struct.sub.lamp = struct.entity
+                        struct.sub.lamp.get_or_create_control_behavior().circuit_condition = {
+                            condition = {
+                                comparator = "=",
+                                first_signal = {type = "virtual", name = "signal-everything" },
+                                constant = 0
+                            }
+                        }
+                        struct.sub.lamp.destructible = false
+
                         struct.entity = struct_create_or_revive(
                         "computer-interface-entity",
                         data.entity.surface, -- surface
@@ -176,7 +186,26 @@ local function OnConfigurationChanged(data)
                         data.entity.force
                         )
                         data.entity = struct.entity
-                        entity.destroy()
+
+                        -- New Entity "speaker"
+                        struct.sub.speaker = struct_create_or_revive(
+                        "computer-speaker",
+                        data.entity.surface, -- surface
+                        { { data.entity.position.x - 1.5, data.entity.position.y - 1 }, { data.entity.position.x + 1.5, data.entity.position.y + 1 } }, -- ghost search area
+                        { x = data.entity.position.x, y = data.entity.position.y }, -- position
+                        data.entity.force
+                        )
+                        struct.sub.speaker.destructible = false
+
+
+                        struct.sub.speaker_combinator = struct_create_or_revive(
+                        "computer-speaker-combinator",
+                        data.entity.surface, -- surface
+                        { { data.entity.position.x - 1.5, data.entity.position.y - 1 }, { data.entity.position.x + 1.5, data.entity.position.y + 1 } }, -- ghost search area
+                        { x = data.entity.position.x, y = data.entity.position.y }, -- position
+                        data.entity.force
+                        )
+                        struct.sub.speaker_combinator.destructible = false
 
                         if data.process then
                             -- Update validator
@@ -306,6 +335,40 @@ local function OnBuiltEntity(event)
         entity.force
         )
         struct.sub.right_combinator.destructible = false
+
+        struct.sub.lamp = struct_create_or_revive(
+        "computer-lamp",
+        entity.surface, -- surface
+        { { entity.position.x - 1.5, entity.position.y - 1 }, { entity.position.x + 1.5, entity.position.y + 1 } }, -- ghost search area
+        { x = entity.position.x, y = entity.position.y }, -- position
+        entity.force
+        )
+        struct.sub.lamp.get_or_create_control_behavior().circuit_condition = {
+            condition = {
+                comparator = "=",
+                first_signal = {type = "virtual", name = "signal-everything" },
+                constant = 0
+            }
+        }
+        struct.sub.lamp.destructible = false
+
+        struct.sub.speaker_combinator = struct_create_or_revive(
+        "computer-speaker-combinator",
+        entity.surface, -- surface
+        { { entity.position.x - 1.5, entity.position.y - 1 }, { entity.position.x + 1.5, entity.position.y + 1 } }, -- ghost search area
+        { x = entity.position.x, y = entity.position.y }, -- position
+        entity.force
+        )
+        struct.sub.speaker_combinator.destructible = false
+
+        struct.sub.speaker = struct_create_or_revive(
+        "computer-speaker",
+        entity.surface, -- surface
+        { { entity.position.x - 1.5, entity.position.y - 1 }, { entity.position.x + 1.5, entity.position.y + 1 } }, -- ghost search area
+        { x = entity.position.x, y = entity.position.y }, -- position
+        entity.force
+        )
+        struct.sub.speaker.destructible = false
 
         table.insert(global.structures, struct)
     end
