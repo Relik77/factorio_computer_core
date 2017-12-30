@@ -641,17 +641,20 @@ computer.commands = {
 
             local fct, err = load(file.text, nil, "t", env.proxies)
 
-            if err ~= nil then
-                return "Error:\n" .. err
-            end
-
             fs.process = table.id(env)
             self:openGui("output").file = file
             self.data.output = "> run " .. file.name
             for index, value in pairs({...}) do
                 self.data.output = self.data.output .. " " .. value
             end
-            self.data.output = self.data.output .. "\nRunning...\n"
+            if err ~= nil then
+                self.data.output = "Error:\n" .. string.gsub(err, "%[string.+%]:", file.name .. ":")
+                self.gui:print(self.data.output)
+                return "Error\n" .. err
+            else
+                self.data.output = self.data.output .. "\nRunning...\n"
+            end
+
             local success, result = pcall(fct)
             if not success then
                 self:exec("stop", false)
