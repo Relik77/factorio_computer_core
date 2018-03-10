@@ -229,6 +229,24 @@ computer = {
                             gui:print(self.computer.data.output)
                         end
                     end,
+                    __getInput = function(self)
+                        local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
+                        if gui and gui.read then
+                            if not gui:read():startsWith(self.computer.data.output) then
+                                if gui and gui.print then
+                                    gui:print(self.computer.data.output)
+                                end
+                            end
+
+                            return gui:read():sub(#self.computer.data.output + 1);
+                        end
+                    end,
+                    __setInput = function(self, text)
+                        local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
+                        if gui and gui.print then
+                            gui:print(self.computer.data.output .. text, true)
+                        end
+                    end,
                     __getLabel = function(self)
                         return self.computer.data.label
                     end,
@@ -286,7 +304,7 @@ computer = {
                         end
                         assert(file.type == "file", filename .. " isn't a file")
 
-                        game.print(table.tostring(self.env.filesLoaded))
+                        -- game.print(table.tostring(self.env.filesLoaded))
                         for index, lib in ipairs(self.env.filesLoaded) do
                             if lib.file == file then
                                 return lib.result

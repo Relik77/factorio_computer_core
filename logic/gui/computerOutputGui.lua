@@ -57,13 +57,28 @@ computer.guis["output"] = {
 
         if not self.valid then return end
         if gui.name == self.prefix .. "output" then
-            return self:print(self.os.data.output)
+            --return self:print(self.os.data.output)
+            self.os:raise_event("on_gui_text_changed", self.os.data.process, event)
         end
     end,
 
-    print = function(self, text)
+    read = function(self)
+        if self.valid then
+            return self.children.output.text
+        end
+        return ""
+    end,
+
+    print = function(self, text, silence)
         if self.valid then
             self.children.output.text = text
+
+            if not silence then
+                self.os:raise_event("after_text_print", self.os.data.process, {
+                    tick = game.tick,
+                    element = self.children.output
+                })
+            end
         end
     end,
 
