@@ -379,6 +379,13 @@ local function OnEntityDied(event)
 
     if not entity.valid then return end
     if global.structures then
+        for index, data in pairs(global.computers) do
+            if data.entity == entity then
+                local item = computer.load(data)
+                item:raise_event("on_script_kill", data.process, event)
+                global.computers[index] = nil
+            end
+        end
         local index = searchIndexInTable(global.structures, entity, 'entity')
         local struct = global.structures[index]
 
