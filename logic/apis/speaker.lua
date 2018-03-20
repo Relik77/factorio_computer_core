@@ -12,6 +12,16 @@ table.insert(computer.apis, {
         end
     },
     prototype = {
+        print = {
+            "speaker.print(text, playerForce = true) - Print your message to the ingame chat log",
+            function(self, text, playerForce)
+                if not playerForce then
+                    self.__player.print(text)
+                else
+                    self.__player.force.print(text)
+                end
+            end
+        },
         mute = {
             "speaker.mute() - Remove alert et mute speaker",
             function(self)

@@ -1,8 +1,14 @@
 require("logic.util")
 
-if not global.computerGuis then global.computerGuis = {} end
-if not global.computers then global.computers = {} end
-if not global.waypoints then global.waypoints = {} end
+if not global.computerGuis then
+    global.computerGuis = {}
+end
+if not global.computers then
+    global.computers = {}
+end
+if not global.waypoints then
+    global.waypoints = {}
+end
 
 computer = {
     apis = {},
@@ -87,7 +93,9 @@ computer = {
             obj.data.root.parent = obj.data.root
             obj.data.cwd = obj.data.root
 
-            if not global.computers then global.computers = {} end
+            if not global.computers then
+                global.computers = {}
+            end
             table.insert(global.computers, obj.data)
         end
 
@@ -179,7 +187,9 @@ computer = {
     end,
 
     registerEmitter = function(self, name, eventEmitter)
-        if not self.data.eventEmitters then self.data.eventEmitters = {} end
+        if not self.data.eventEmitters then
+            self.data.eventEmitters = {}
+        end
 
         table.insert(self.data.eventEmitters, {
             name = name,
@@ -204,158 +214,328 @@ computer = {
     end,
 
     loadAPI = function(self, api, item, proxy, env)
-        local player = self:getPlayer()
+        --local player = self:getPlayer()
         setmetatable(item, {
-            -- protected metatable
+        -- protected metatable
             __index = setmetatable({
-                -- Empty object (this is a proxy to the private properties of the API)
+            -- Empty object (this is a proxy to the private properties of the API)
             }, {
-                -- private properties
+            -- private properties
                 env = env,
                 computer = self,
-                player = player,
+            --player = player,
 
                 getters = {
-                    __getAPI = function(self, name)
-                        return self.env.proxies[name]
+                    __player = function(self)
+                        return self.computer:getPlayer()
+                    end,
+                    __env = function(self)
+                        return env.proxies
+                    end,
+                    __getAPI = function(self)
+                        return function(name)
+                            return self.env.proxies[name]
+                        end
                     end,
                     __getOutput = function(self)
-                        return self.computer.data.output
+                        return function()
+                            return self.computer.data.output
+                        end
                     end,
-                    __setOutput = function(self, text)
-                        self.computer.data.output = text
-                        local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
-                        if gui and gui.print then
-                            gui:print(self.computer.data.output)
+                    __setOutput = function(self)
+                        return function(text)
+                            self.computer.data.output = text
+                            local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
+                            if gui and gui.print then
+                                gui:print(self.computer.data.output)
+                            end
                         end
                     end,
                     __getInput = function(self)
-                        local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
-                        if gui and gui.read then
-                            if not gui:read():startsWith(self.computer.data.output) then
-                                if gui and gui.print then
-                                    gui:print(self.computer.data.output)
+                        return function()
+                            local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
+                            if gui and gui.read then
+                                if not gui:read():startsWith(self.computer.data.output) then
+                                    if gui and gui.print then
+                                        gui:print(self.computer.data.output)
+                                    end
                                 end
-                            end
 
-                            return gui:read():sub(#self.computer.data.output + 1);
+                                return gui:read():sub(#self.computer.data.output + 1);
+                            end
                         end
                     end,
-                    __setInput = function(self, text)
-                        local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
-                        if gui and gui.print then
-                            gui:print(self.computer.data.output .. text, true)
+                    __setInput = function(self)
+                        return function(text)
+                            local gui = searchInTable(global.computerGuis, self.computer.data, "os", "data")
+                            if gui and gui.print then
+                                gui:print(self.computer.data.output .. text, true)
+                            end
                         end
                     end,
                     __getLabel = function(self)
-                        return self.computer.data.label
+                        return function()
+                            return self.computer.data.label
+                        end
                     end,
-                    __setLabel = function(self, label)
-                        self.computer.data.label = label
+                    __setLabel = function(self)
+                        return function(label)
+                            self.computer.data.label = label
+                        end
                     end,
                     __getID = function(self)
-                        return table.id(self.computer.data)
+                        return function()
+                            return table.id(self.computer.data)
+                        end
                     end,
-                    __emit = function(self, label, event_name, ...)
-                        for index, computer in pairs(self.computer:getComputers(label)) do
-                            if computer.data and computer.data.process then
-                                computer:raise_event(event_name, computer.data.process, ...)
+                    __emit = function(self)
+                        return function(label, event_name, ...)
+                            for index, computer in pairs(self.computer:getComputers(label)) do
+                                if computer.data and computer.data.process then
+                                    computer:raise_event(event_name, computer.data.process, ...)
+                                end
                             end
                         end
                     end,
-                    __broadcast = function(self, event_name, ...)
-                        for index, computer in pairs(self.computer:getComputers()) do
-                            if computer.data and computer.data.process then
-                                computer:raise_event(event_name, computer.data.process, ...)
+                    __broadcast = function(self)
+                        return function(event_name, ...)
+                            for index, computer in pairs(self.computer:getComputers()) do
+                                if computer.data and computer.data.process then
+                                    computer:raise_event(event_name, computer.data.process, ...)
+                                end
                             end
                         end
                     end,
-                    __getWaypoint = function(self, name)
-                        if not global.waypoints then
-                            global.waypoints = {}
-                        end
-                        for index, waypoint in pairs(global.waypoints) do
-                            if waypoint.force == self.player.force and waypoint.name == name then
-                                return waypoint
+                    __getWaypoint = function(self)
+                        return function(name)
+                            if not global.waypoints then
+                                global.waypoints = {}
                             end
+                            for index, waypoint in pairs(global.waypoints) do
+                                if waypoint.force == self.computer:getPlayer().force and waypoint.name == name then
+                                    return waypoint
+                                end
+                            end
+                            return nil
                         end
-                        return nil
                     end,
-                    __getGameTick = function()
-                        return game.tick
+                    __getGameTick = function(self)
+                        return function()
+                            return game.tick
+                        end
                     end,
-                    __require = function(self, filename)
-                        local file = self.env.file.parent
+                    __require = function(self)
+                        return function(filename)
+                            local file = self.env.file.parent
 
-                        assert(type(filename) == "string")
-                        assert(filename ~= ".")
-                        assert(filename ~= "..")
+                            assert(type(filename) == "string")
+                            assert(filename ~= ".")
+                            assert(filename ~= "..")
 
-                        if filename:startsWith("/") then
-                            file = self.computer.data.root
+                            if filename:startsWith("/") then
+                                file = self.computer.data.root
+                            end
+
+                            for index, _dirname in pairs(filename:split("/")) do
+                                if _dirname ~= "" then
+                                    assert(file.type == "dir", filename .. " isn't a directory")
+                                    assert(file.files[_dirname] ~= nil, filename .. " no such file or directory")
+                                    file = file.files[_dirname]
+                                end
+                            end
+                            assert(file.type == "file", filename .. " isn't a file")
+
+                            -- game.print(table.tostring(self.env.filesLoaded))
+                            if not getmetatable(self.env.filesLoaded) then
+                                self.env.filesLoaded = {}
+                                setmetatable(self.env.filesLoaded, {});
+                            end
+                            for index, lib in ipairs(self.env.filesLoaded) do
+                                if lib.file == file then
+                                    return lib.result
+                                end
+                            end
+                            file.atime = game.tick;
+
+                            local fct, err = load(file.text, nil, "t", self.env.proxies)
+                            assert(err == nil, err)
+                            local success, result = pcall(fct)
+                            assert(success == true, result)
+
+                            table.insert(self.env.filesLoaded, { file = file, result = result })
+                            return result
                         end
+                    end,
+                    __readFile = function(self)
+                        return function(filename)
+                            local file = self.env.file.parent
 
-                        for index, _dirname in pairs(filename:split("/")) do
-                            if _dirname ~= "" then
-                                assert(file.type == "dir", filename .. " isn't a directory")
-                                assert(file.files[_dirname] ~= nil, filename .. " no such file or directory")
-                                file = file.files[_dirname]
+                            assert(type(filename) == "string")
+                            assert(filename ~= ".")
+                            assert(filename ~= "..")
+
+                            if filename:startsWith("/") then
+                                file = self.computer.data.root
+                            end
+
+                            for index, _dirname in pairs(filename:split("/")) do
+                                if _dirname ~= "" then
+                                    assert(file.type == "dir", filename .. " isn't a directory")
+                                    assert(file.files[_dirname] ~= nil, filename .. " no such file or directory")
+                                    file = file.files[_dirname]
+                                end
+                            end
+                            assert(file.type == "file", filename .. " isn't a file")
+
+                            file.atime = game.tick;
+                            return file.text;
+                        end
+                    end,
+                    __writeFile = function(self)
+                        return function(filename, ...)
+                            local file = self.env.file.parent
+
+                            assert(type(filename) == "string")
+                            assert(filename ~= ".")
+                            assert(filename ~= "..")
+
+                            if filename:startsWith("/") then
+                                file = self.computer.data.root
+                            end
+
+                            local parentFile = file.parent
+                            for index, _dirname in pairs(filename:split("/")) do
+                                if _dirname ~= "" then
+                                    if not file.type then
+                                        file.type = "dir"
+                                        file.files = {}
+                                        file.parent.files[file.name] = file
+                                    end
+                                    assert(file.type == "dir", filename .. " isn't a directory")
+                                    parentFile = file
+                                    file = file.files[_dirname]
+                                    if not file then
+                                        file = {
+                                            type = nil,
+
+                                            parent = parentFile,
+                                            name = _dirname,
+
+                                            ctime = game.tick,
+                                            mtime = game.tick,
+                                            atime = game.tick
+                                        }
+                                    end
+                                end
+                            end
+                            if not file.type then
+                                file.type = "file"
+                                file.text = ""
+                                file.parent.files[file.name] = file
+                            end
+                            assert(file.type == "file", filename .. " isn't a file")
+
+                            file.mtime = game.tick;
+                            file.atime = game.tick;
+                            file.text = "";
+
+                            for index, text in pairs({...}) do
+                                if type(text) == "table" then
+                                    text = table.tostring(text)
+                                end
+                                file.text = file.text .. text
                             end
                         end
-                        assert(file.type == "file", filename .. " isn't a file")
+                    end,
+                    __removeFile = function(self)
+                        return function(filename)
+                            local file = self.env.file.parent
 
-                        -- game.print(table.tostring(self.env.filesLoaded))
-                        for index, lib in ipairs(self.env.filesLoaded) do
-                            if lib.file == file then
-                                return lib.result
+                            assert(type(filename) == "string")
+                            assert(filename ~= ".")
+                            assert(filename ~= "..")
+
+                            if filename:startsWith("/") then
+                                file = self.computer.data.root
                             end
+
+                            for index, _dirname in pairs(filename:split("/")) do
+                                if _dirname ~= "" then
+                                    assert(file.type == "dir", filename .. " isn't a directory")
+                                    assert(file.files[_dirname] ~= nil, filename .. " no such file or directory")
+                                    file = file.files[_dirname]
+                                end
+                            end
+                            assert(file.type == "file", filename .. " isn't a file")
+
+                            file.parent.files[file.name] = nil
                         end
-                        file.atime = game.tick;
+                    end,
+                    __fileExist = function(self)
+                        return function(filename)
+                            local file = self.env.file.parent
 
-                        local fct, err = load(file.text, nil, "t", self.env.proxies)
-                        assert(err == nil, err)
-                        local success, result = pcall(fct)
-                        assert(success == true, result)
+                            assert(type(filename) == "string")
+                            assert(filename ~= ".")
+                            assert(filename ~= "..")
 
-                        table.insert(self.env.filesLoaded, {file = file, result = result})
-                        return result
+                            if filename:startsWith("/") then
+                                file = self.computer.data.root
+                            end
+
+                            for index, _dirname in pairs(filename:split("/")) do
+                                if _dirname ~= "" then
+                                    assert(file.type == "dir", filename .. " isn't a directory")
+                                    file = file.files[_dirname]
+                                    if not file then
+                                        return false
+                                    end
+                                end
+                            end
+                            assert(file.type == "file", filename .. " isn't a file")
+                            return true
+                        end
                     end
                 },
 
-                -- access to private properties
+            -- access to private properties
                 __index = function(table, key)
                     local self = getmetatable(table)
                     if type(self.getters[key]) == "function" then
-                        return function(...)
-                            return self.getters[key](self, ...)
-                        end
+                    --    return function(...)
+                    --        return self.getters[key](self, ...)
+                    --    end
+                        return self.getters[key](self)
                     end
+                    --if key == "__player" then
+                    --    return self.computer:getPlayer()
+                    --end
                     return self.getters[key]
                 end,
 
-                -- Set protected metatable 'Read-Only'
+            -- Set protected metatable 'Read-Only'
                 __newindex = function(self, key)
                     assert(false, "Can't edit protected metatable")
                 end
             }),
 
-            -- The API isn't 'Read-Only'
+        -- The API isn't 'Read-Only'
 
-            -- Protect metatable (blocks access to the metatable)
+        -- Protect metatable (blocks access to the metatable)
             __metatable = "this is the protected API " .. api.name
         })
 
         setmetatable(proxy, {
-            -- protected metatable
+        -- protected metatable
             __index = setmetatable({
-                -- Empty object (this is a proxy to the private properties of the proxy)
+            -- Empty object (this is a proxy to the private properties of the proxy)
             }, {
-                -- private properties
+            -- private properties
                 env = env,
                 api = item,
                 apiPrototype = api,
 
-                -- access to private properties
+            -- access to private properties
                 __index = function(tbl, key)
                     local self = getmetatable(tbl)
                     assert(self.env.prototypes[self.apiPrototype.name][key], self.apiPrototype.name .. " doesn't have key " .. key)
@@ -367,18 +547,18 @@ computer = {
                     return self.api[key]
                 end,
 
-                -- Set protected metatable 'Read-Only'
+            -- Set protected metatable 'Read-Only'
                 __newindex = function(self, key)
                     assert(false, "Can't edit protected metatable")
                 end
             }),
 
-            -- Set Proxy 'Read-Only'
+        -- Set Proxy 'Read-Only'
             __newindex = function(self, key)
                 assert(false, "Can't edit API " .. self.apiPrototype.name)
             end,
 
-            -- Protect metatable (blocks access to the metatable)
+        -- Protect metatable (blocks access to the metatable)
             __metatable = "this is the API " .. api.name
         })
 
@@ -386,7 +566,9 @@ computer = {
     end,
 
     openGui = function(self, type, player)
-        if not global.computerGuis then global.computerGuis = {} end
+        if not global.computerGuis then
+            global.computerGuis = {}
+        end
         if self.data.output ~= "" then
             type = "output"
         end
@@ -447,7 +629,7 @@ computer = {
             else
                 table.remove(params, 1)
 
-                for index, value in pairs({...}) do
+                for index, value in pairs({ ... }) do
                     table.insert(params, value)
                 end
                 return command[2](self, self.data, unpack(params))

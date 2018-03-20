@@ -583,15 +583,15 @@ computer.commands = {
                     };
                     table.insert(fs.apis, validator)
 
-                    local player = self:getPlayer()
+                    --local player = self:getPlayer()
                     if not env.apis[api.name] then
                         env.apis[api.name], env.proxies[api.name] = self:loadAPI(api, {
                             -- public properties
                             __name = api.name,
                             __entity = fs.entity,
                             __entityStructure = searchInTable(global.structures, fs.entity, 'entity'),
-                            __player = player,
-                            __env = env.proxies,
+                            --__player = player,
+                            --__env = env.proxies,
                         }, {
                             -- Empty object (its a proxy to protected API)
                         }, env)

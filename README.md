@@ -75,8 +75,12 @@ An API (Application Programming Interface) is a collection of code that, rather 
 - `os API` : The Operating System API allows for interfacing with the Lua based Operating System itself.
 Exemple: `os.wait(callback, seconds)` wait a number of seconds before executing callback function.
 - `term API` : The Terminal API provides functions for writing text to the terminal. Exemple: `term.write(text)` writes text to the screen
+- `disk API` : The DISK API provides functions for file manipulation
+- `lan API` : The LAN API provides functions to communicate using circuit network
+- `wlan API` : The WLAN API provides functions to communicate using wirless network
+- `speaker API` : The Speaker API makes it possible to issue map alerts
 
-More information available with `help os` and `help term`.
+More information available with `help {api name}`
 
 Official *computer* mods
 ------------------------

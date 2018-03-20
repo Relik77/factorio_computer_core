@@ -14,6 +14,7 @@ require("logic.apis.os")
 require("logic.apis.lan")
 require("logic.apis.wlan")
 require("logic.apis.speaker")
+require("logic.apis.disk")
 
 baseEnv = {
     ipairs = ipairs,
@@ -496,6 +497,24 @@ end)
 
 script.on_event(defines.events.on_tick, OnTick)
 script.on_configuration_changed(OnConfigurationChanged)
+script.on_load(function()
+    if not global.computers then
+        return
+    end
+
+    for index, data in pairs(global.computers) do
+        if data.process ~= nil then
+            local item = computer.load(data)
+            local env = item.data.env
+
+            for index, api in pairs(computer.apis) do
+                if env.apis[api.name] and not type(getmetatable(env.apis[api.name])) ~= "string" then
+                    item:loadAPI(api, env.apis[api.name], env.proxies[api.name], env)
+                end
+            end
+        end
+    end
+end)
 
 script.on_event(defines.events.on_gui_click, OnGuiClick)
 script.on_event(defines.events.on_gui_text_changed, OnGuiTextChanged)
