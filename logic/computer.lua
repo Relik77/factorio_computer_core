@@ -10,6 +10,31 @@ if not global.waypoints then
     global.waypoints = {}
 end
 
+function apiAllowed(api, entity)
+    if type(api.entities) == "function" then
+        local success, result = pcall(api.entities, entity)
+        if success then
+            return result
+        end
+    elseif type(api.entities) == "table" then
+        return table.contains(api.entities, entity.name)
+    else
+        if type(api.entities) == "string" then
+            local fct, err = load(api.entities, nil, "t", baseEnv)
+            assert(err == nil, err)
+            local success, test = pcall(fct)
+            assert(success, test)
+            local success, result = pcall(test, entity)
+            if success then
+                return result
+            else
+                return false
+            end
+        end
+        return true
+    end
+end
+
 computer = {
     apis = {},
 
@@ -211,6 +236,115 @@ computer = {
 
     clearEmitters = function(self)
         self.data.eventEmitters = {}
+    end,
+
+    runScript = function(self, fs, script, script_name, ...)
+        local env = {
+            apis = {},
+            prototypes = {},
+            proxies = {
+            },
+            file = file,
+            filesLoaded = {}
+        }
+        local err
+
+        fs.apis = {};
+        fs.env = env;
+        for index, api in pairs(computer.apis) do
+            if apiAllowed(api, fs.entity) then
+                local validator = {
+                    apiPrototype = api,
+                    entity = fs.entity,
+                    apiAllowed = apiAllowed,
+                    validate = function(self)
+                        return self.apiAllowed(self.apiPrototype, self.entity)
+                    end
+                };
+                table.insert(fs.apis, validator)
+
+                --local player = self:getPlayer()
+                if not env.apis[api.name] then
+                    env.apis[api.name], env.proxies[api.name] = self:loadAPI(api, {
+                    -- public properties
+                        __name = api.name,
+                        __entity = fs.entity,
+                        __entityStructure = searchInTable(global.structures, fs.entity, 'entity'),
+                    --__player = player,
+                    --__env = env.proxies,
+                    }, {
+                    -- Empty object (its a proxy to protected API)
+                    }, env)
+                end
+
+                if not env.prototypes[api.name] then env.prototypes[api.name] = {} end
+                for index, value in pairs(api.prototype or {}) do
+                    if type(index) == "string" then
+                        env.apis[api.name][index] = deepcopy(value[2])
+                        if not index:startsWith("_") then
+                            env.prototypes[api.name][index] = true
+                        end
+                    end
+                end
+                for event_name, callback in pairs(api.events or {}) do
+                    if type(event_name) == "string" and type(callback) == "function" then
+                        local eventEmitter = {
+                            processId = table.id(env),
+                            computer = self,
+                            api = env.apis[api.name],
+                            callback = callback,
+                            emit = function(self, process, event, ...)
+                                if process == self.processId then
+                                    local success, result = pcall(self.callback, self.api, event, ...)
+                                    if not success then
+                                        self.computer.data.output = self.computer.data.output .. "Error:\n" .. result .. "\n"
+                                    end
+                                end
+                            end
+                        };
+                        self:registerEmitter(event_name, eventEmitter)
+                    end
+                end
+                if type(env.apis[api.name].__init) == "function" then
+                    local success, result = pcall(env.apis[api.name].__init, env.apis[api.name])
+                    if not success then
+                        return "Error:\n" .. result
+                    end
+                end
+            end
+        end
+
+        env.proxies.args = {...}
+        deepcopy(baseEnv, env.proxies)
+
+        if type(script) == "string" then
+            script, err = load(script, nil, "bt", env.proxies)
+        end
+
+        fs.process = table.id(env)
+        self.data.output = "> run " .. script_name
+        for index, value in pairs({...}) do
+            self.data.output = self.data.output .. " " .. value
+        end
+        if err ~= nil then
+            self.data.output = "Error:\n" .. string.gsub(err, "%[string.+%]:", script_name .. ":")
+            if self.gui then
+                self.gui:print(self.data.output)
+            end
+            return "Error\n" .. err
+        else
+            self.data.output = self.data.output .. "\nRunning...\n"
+        end
+
+        local success, result = pcall(script)
+        if not success then
+            self:exec("stop", false)
+            self.data.output = self.data.output .. "Error:\n" .. result
+        end
+        if self.gui then
+            self.gui:print(self.data.output)
+        end
+        return result, env
     end,
 
     loadAPI = function(self, api, item, proxy, env)

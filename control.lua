@@ -90,27 +90,54 @@ local function raise_event(event_name, event_data)
         global.computers = {}
     end
 
-    for index, data in pairs(global.computers) do
+    local function raiseComputerEvent(data)
         if not data.entity or (not data.entity.valid and not data.entityIsPlayer) then
-            global.computers[index] = nil
-        elseif data.process ~= nil then
-            local item = computer.load(data)
-            if item then
-                for index, validator in pairs(data.apis or {}) do
-                    if not validator:validate() then
-                        item:exec("stop", false)
-                        return
-                    end
-                    if not getmetatable(data.env.proxies[validator.apiPrototype.name]) then
-                        if data.env then
-                            item:loadAPI(validator.apiPrototype, data.env.apis[validator.apiPrototype.name], data.env.proxies[validator.apiPrototype.name], data.env)
-                        end
+            return false
+        end
+
+        local item = computer.load(data)
+        if not item then
+            return false
+        end
+
+        if data.process ~= nil then
+            for index, validator in pairs(data.apis or {}) do
+                if not validator:validate() then
+                    item:exec("stop", false)
+                    return true
+                end
+                if not getmetatable(data.env.proxies[validator.apiPrototype.name]) then
+                    if data.env then
+                        item:loadAPI(validator.apiPrototype, data.env.apis[validator.apiPrototype.name], data.env.proxies[validator.apiPrototype.name], data.env)
                     end
                 end
-                item:raise_event(event_name, data.process, event_data)
-            else
-                global.computers[index] = nil
             end
+            item:raise_event(event_name, data.process, event_data)
+        end
+
+        if event_name == "on_tick" and data.isNew then
+            if not data.entity.electric_buffer_size or data.entity.energy > 0 then
+                local startupEvent = {
+                    computer = item.data
+                }
+                startupEvent.autorun = function(startupScript)
+                    if not startupEvent.autorun then
+                        return
+                    end
+                    startupEvent.autorun = nil
+                    item:runScript(data, string.dump(startupScript), "autorun")
+                end
+                raise_event("on_built_computer", startupEvent)
+                data.isNew = nil
+            end
+        end
+
+        return true
+    end
+
+    for index, data in pairs(global.computers) do
+        if not raiseComputerEvent(data) then
+            global.computers[index] = nil
         end
     end
 end
@@ -372,6 +399,8 @@ local function OnBuiltEntity(event)
         struct.sub.speaker.destructible = false
 
         table.insert(global.structures, struct)
+
+        computer.new(entity).data.isNew = true
     end
 end
 

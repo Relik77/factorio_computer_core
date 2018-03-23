@@ -67,9 +67,13 @@ table.insert(computer.apis,{
         -- Public methods
         setOutput = {
             "term.setOutput(text) - Writes text to the screen",
-            function(self, text)
-                if type(text) == "table" then
-                    text = table.tostring(text)
+            function(self, ...)
+                local text = ""
+                for index, data in ipairs({...}) do
+                    if type(data) == "table" then
+                        data = table.tostring(data)
+                    end
+                    text = text .. data
                 end
                 self.__setOutput(self.__getOutput() .. text .. "\n")
             end
