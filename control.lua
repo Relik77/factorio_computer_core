@@ -29,6 +29,8 @@ baseEnv = {
     string = string,
     math = math,
     assert = assert,
+    load = load,
+    pcall = pcall,
 
     defines = defines,
 }
@@ -404,10 +406,34 @@ local function OnBuiltEntity(event)
     end
 end
 
+local function OnPreGhostDeconstructed(event)
+    local entity = event.ghost
+
+    game.print("OnPreGhostDeconstructed")
+    if entity.ghost_name == "computer-interface-entity" then
+        local ghosts = entity.surface.find_entities_filtered {
+            area = { { entity.position.x - 1.5, entity.position.y - 1 }, { entity.position.x + 1.5, entity.position.y + 1 } },
+            name = "entity-ghost",
+            force = entity.force }
+
+        for _, each_ghost in pairs(ghosts) do
+            if each_ghost.valid and each_ghost.ghost_name == "computer-combinator" then
+                game.print("remove computer-combinator ghosts")
+                each_ghost.destroy()
+            end
+        end
+    end
+end
+
 local function OnEntityDied(event)
     local entity = event.entity
 
     if not entity.valid then return end
+    if entity.name == "entity-ghost" then
+        return OnPreGhostDeconstructed({
+            ghost = entity
+        })
+    end
     if global.structures then
         for index, data in pairs(global.computers) do
             if data.entity == entity then
@@ -553,6 +579,7 @@ script.on_event(defines.events.on_gui_elem_changed, OnGuiElemChanged)
 
 script.on_event(defines.events.on_built_entity, OnBuiltEntity)
 script.on_event(defines.events.on_robot_built_entity, OnBuiltEntity)
+script.on_event(defines.events.on_pre_ghost_deconstructed, OnPreGhostDeconstructed)
 script.on_event(defines.events.on_entity_died, OnEntityDied)
 script.on_event(defines.events.on_pre_player_mined_item, OnEntityDied)
 script.on_event(defines.events.on_robot_pre_mined, OnEntityDied)

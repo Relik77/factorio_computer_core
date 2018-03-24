@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.3.6
+
+  Features:
+    - Add API os.pcall : The os.pcall function calls its first argument in protected mode (support to protect your script environment in asynchronous callback. And catches any errors same as the native "pcall" function)
+  Changes:
+    - Computer combinator is now supported in blueprints
+---------------------------------------------------------------------------------------------------
 Version: 1.3.5
 Date: 23. 03. 2018
   Features:

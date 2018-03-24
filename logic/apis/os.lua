@@ -83,6 +83,16 @@ table.insert(computer.apis,{
                 self._data[name] = nil
             end
         },
+        pcall = {
+            "os.pcall(callback, ...) - The os.pcall function calls its first argument in protected mode, so that it catches any errors while the function is running. If there are no errors, pcall returns true, plus any values returned by the call. Otherwise, it returns false, plus the error message.",
+            function(self, callback, ...)
+                local fct, err = load(string.dump(callback), nil, "b", self.__env)
+                if err then
+                    return false, err
+                end
+                return pcall(fct, ...)
+            end
+        },
         wait = {
             "os.wait(callback, seconds, ...args) - Wait a number of seconds before executing callback function",
             function(self, callback, seconds, ...)
