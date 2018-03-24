@@ -409,7 +409,6 @@ end
 local function OnPreGhostDeconstructed(event)
     local entity = event.ghost
 
-    game.print("OnPreGhostDeconstructed")
     if entity.ghost_name == "computer-interface-entity" then
         local ghosts = entity.surface.find_entities_filtered {
             area = { { entity.position.x - 1.5, entity.position.y - 1 }, { entity.position.x + 1.5, entity.position.y + 1 } },
@@ -418,7 +417,6 @@ local function OnPreGhostDeconstructed(event)
 
         for _, each_ghost in pairs(ghosts) do
             if each_ghost.valid and each_ghost.ghost_name == "computer-combinator" then
-                game.print("remove computer-combinator ghosts")
                 each_ghost.destroy()
             end
         end
