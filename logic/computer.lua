@@ -646,7 +646,11 @@ computer = {
             -- access to private properties
                 __index = function(table, key)
                     local self = getmetatable(table)
-                    return self.getters[key](self)
+                    if type(self.getters[key]) == "function" then
+                        return self.getters[key](self)
+                    end
+                    -- __init is an optional api function
+                    return self.getters[key]
                 end,
 
             -- Set protected metatable 'Read-Only'
