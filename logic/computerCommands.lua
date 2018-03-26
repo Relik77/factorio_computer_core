@@ -540,6 +540,7 @@ computer.commands = {
 
             self:openGui("output").file = file
             local result, env = self:runScript(fs, file.text, file.name, ...)
+            env.file = file
             table.insert(env.filesLoaded, {file = file, result = result})
         end
     },

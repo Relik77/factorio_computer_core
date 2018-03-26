@@ -244,7 +244,18 @@ computer = {
             prototypes = {},
             proxies = {
             },
-            file = file,
+            file = {
+                type = "file",
+
+                parent = fs.root,
+                name = "temp_" .. game.tick,
+
+                ctime = game.tick,
+                mtime = game.tick,
+                atime = game.tick,
+
+                text = ""
+            },
             filesLoaded = {}
         }
         local err
@@ -364,7 +375,7 @@ computer = {
                         return self.computer:getPlayer()
                     end,
                     __env = function(self)
-                        return env.proxies
+                        return self.env.proxies
                     end,
                     __getAPI = function(self)
                         return function(name)
@@ -635,16 +646,7 @@ computer = {
             -- access to private properties
                 __index = function(table, key)
                     local self = getmetatable(table)
-                    if type(self.getters[key]) == "function" then
-                    --    return function(...)
-                    --        return self.getters[key](self, ...)
-                    --    end
-                        return self.getters[key](self)
-                    end
-                    --if key == "__player" then
-                    --    return self.computer:getPlayer()
-                    --end
-                    return self.getters[key]
+                    return self.getters[key](self)
                 end,
 
             -- Set protected metatable 'Read-Only'
