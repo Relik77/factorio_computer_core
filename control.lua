@@ -124,10 +124,11 @@ local function raise_event(event_name, event_data)
                 }
                 startupEvent.autorun = function(startupScript)
                     if not startupEvent.autorun then
-                        return
+                        return false
                     end
                     startupEvent.autorun = nil
-                    item:runScript(data, string.dump(startupScript), "autorun")
+                    local success = item:runScript(data, string.dump(startupScript), "autorun")
+                    return success
                 end
                 raise_event("on_built_computer", startupEvent)
                 data.isNew = nil

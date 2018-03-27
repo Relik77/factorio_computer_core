@@ -172,18 +172,15 @@ computer = {
     end,
 
     getLabeleld = function(self)
-        local player = self:getPlayer()
+        local entity = self.data.entity
         local labels = {}
 
-        if player then
-            for i, computerData in pairs(global.computers) do
-                if not computerData.entityIsPlayer or computerData.entityIsPlayer == player.index then
-                    local _computer = computer.load(computerData)
-                    if _computer then
-                        local computerPlayer = _computer:getPlayer()
-                        if computerPlayer and (computerPlayer.force == player.force or computerPlayer.force.get_friend(player.force)) and computerData.label then
-                            labels[computerData.label] = _computer
-                        end
+        for i, computerData in pairs(global.computers) do
+            if not computerData.entityIsPlayer or computerData.entityIsPlayer == player.index then
+                local _computer = computer.load(computerData)
+                if _computer then
+                    if (computerData.entity.force == entity.force or computerData.entity.force.get_friend(entity.force)) and computerData.label then
+                        labels[computerData.label] = _computer
                     end
                 end
             end
@@ -193,17 +190,14 @@ computer = {
     end,
 
     getComputers = function(self, label)
-        local player = self:getPlayer()
+        local entity = self.data.entity
         local computers = {}
 
-        if player then
-            for i, computerData in pairs(global.computers) do
-                local _computer = computer.load(computerData)
-                if _computer then
-                    local computerPlayer = _computer:getPlayer()
-                    if computerPlayer and (computerPlayer.force == player.force or computerPlayer.force.get_friend(player.force)) and (not label or computerData.label == label) then
-                        table.insert(computers, _computer)
-                    end
+        for i, computerData in pairs(global.computers) do
+            local _computer = computer.load(computerData)
+            if _computer then
+                if (computerData.entity.force == entity.force or computerData.entity.force.get_friend(entity.force)) and (not label or computerData.label == label) then
+                    table.insert(computers, _computer)
                 end
             end
         end
@@ -342,7 +336,7 @@ computer = {
             if self.gui then
                 self.gui:print(self.data.output)
             end
-            return "Error\n" .. err
+            return false, nil, env
         else
             self.data.output = self.data.output .. "\nRunning...\n"
         end
@@ -351,11 +345,15 @@ computer = {
         if not success then
             self:exec("stop", false)
             self.data.output = self.data.output .. "Error:\n" .. result
+            if self.gui then
+                self.gui:print(self.data.output)
+            end
+            return false, nil, env
         end
         if self.gui then
             self.gui:print(self.data.output)
         end
-        return result, env
+        return true, result, env
     end,
 
     loadAPI = function(self, api, item, proxy, env)
@@ -457,7 +455,7 @@ computer = {
                                 global.waypoints = {}
                             end
                             for index, waypoint in pairs(global.waypoints) do
-                                if waypoint.force == self.computer:getPlayer().force and waypoint.name == name then
+                                if waypoint.force == self.data.entity.force and waypoint.name == name then
                                     return waypoint
                                 end
                             end

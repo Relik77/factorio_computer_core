@@ -539,9 +539,11 @@ computer.commands = {
             fs.file = file
 
             self:openGui("output").file = file
-            local result, env = self:runScript(fs, file.text, file.name, ...)
-            env.file = file
-            table.insert(env.filesLoaded, {file = file, result = result})
+            local success, result, env = self:runScript(fs, file.text, file.name, ...)
+            if success then
+                env.file = file
+                table.insert(env.filesLoaded, {file = file, result = result})
+            end
         end
     },
     stop = {
