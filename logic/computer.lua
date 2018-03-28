@@ -171,12 +171,13 @@ computer = {
         end
     end,
 
-    getLabeleld = function(self)
+    getLabeled = function(self)
+        local player = self:getPlayer()
         local entity = self.data.entity
         local labels = {}
 
         for i, computerData in pairs(global.computers) do
-            if not computerData.entityIsPlayer or computerData.entityIsPlayer == player.index then
+            if not computerData.entityIsPlayer or not player or computerData.entityIsPlayer == player.index then
                 local _computer = computer.load(computerData)
                 if _computer then
                     if (computerData.entity.force == entity.force or computerData.entity.force.get_friend(entity.force)) and computerData.label then

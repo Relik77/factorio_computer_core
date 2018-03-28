@@ -36,7 +36,7 @@ computer.commands = {
                                             type = "dir",
                                             files = {}
                                         }
-                                        for label, _computer in pairs(self:getLabeleld()) do
+                                        for label, _computer in pairs(self:getLabeled()) do
                                             file.files[label] = _computer.data.root
                                         end
                                     else
@@ -288,7 +288,7 @@ computer.commands = {
                 elseif dirname == ".." then
                     folder = folder.parent
                 elseif fs.cwd == fs.root and dirname == "mnt" then
-                    local labels = self:getLabeleld()
+                    local labels = self:getLabeled()
                     for label, v in pairs(labels) do
                         text = text .. "- " .. " " .. label .. "\n"
                     end
@@ -307,7 +307,7 @@ computer.commands = {
                             else
                                 if folder == fs.root and _dirname == "mnt" then
                                     if count == 0 then
-                                        local labels = self:getLabeleld()
+                                        local labels = self:getLabeled()
                                         for label, v in pairs(labels) do
                                             text = text .. "- " .. " " .. label .. "\n"
                                         end
@@ -632,7 +632,7 @@ computer.commands = {
                                     type = "dir",
                                     files = {}
                                 }
-                                for label, _computer in pairs(self:getLabeleld()) do
+                                for label, _computer in pairs(self:getLabeled()) do
                                     file.files[label] = _computer.data.root
                                 end
 
@@ -682,7 +682,7 @@ computer.commands = {
 
             local text = ".\n"
             if fs.cwd == fs.root then
-                local labels = self:getLabeleld()
+                local labels = self:getLabeled()
                 local count = table.len(labels)
 
                 if table.len(fs.root.files) > 0 then
