@@ -410,6 +410,7 @@ end
 local function OnPreGhostDeconstructed(event)
     local entity = event.ghost
 
+    if entity.name ~= "entity-ghost" then return end
     if entity.ghost_name == "computer-interface-entity" then
         local ghosts = entity.surface.find_entities_filtered {
             area = { { entity.position.x - 1.5, entity.position.y - 1 }, { entity.position.x + 1.5, entity.position.y + 1 } },

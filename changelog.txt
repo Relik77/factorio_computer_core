@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.3.10
+Date: 27. 03. 2018
+  Bugfixes:
+    - Fix "Error while running event computer_core::on_pre_ghost_deconstructed: Entity is not ghost."
+---------------------------------------------------------------------------------------------------
 Version: 1.3.9
 Date: 27. 03. 2018
   Bugfixes:
