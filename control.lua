@@ -271,7 +271,9 @@ local function OnGuiClick(event)
 
         if name == "computer_gauntlet_btn" then
             if not global.computerGuis[player.index] then
-                computer.new(player.character):openGui("console", player)
+                if player.character then
+                    computer.new(player.character):openGui("console", player)
+                end
             else
                 global.computerGuis[player.index]:destroy()
                 global.computerGuis[player.index] = nil
