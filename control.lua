@@ -562,11 +562,15 @@ script.on_load(function()
     for index, data in pairs(global.computers) do
         if data.process ~= nil then
             local item = computer.load(data)
-            local env = item.data.env
+            if not item then
+                game.print("Computer Core: WARNING, invalid computer detected. You likely are loading a multiplayer save file in singleplayer.")
+            else
+                local env = item.data.env
 
-            for index, api in pairs(computer.apis) do
-                if env.apis[api.name] and not type(getmetatable(env.apis[api.name])) ~= "string" then
-                    item:loadAPI(api, env.apis[api.name], env.proxies[api.name], env)
+                for index, api in pairs(computer.apis) do
+                    if env.apis[api.name] and not type(getmetatable(env.apis[api.name])) ~= "string" then
+                        item:loadAPI(api, env.apis[api.name], env.proxies[api.name], env)
+                    end
                 end
             end
         end
