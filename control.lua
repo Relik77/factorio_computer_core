@@ -562,9 +562,7 @@ script.on_load(function()
     for index, data in pairs(global.computers) do
         if data.process ~= nil then
             local item = computer.load(data)
-            if not item then
-                game.print("Computer Core: WARNING, invalid computer detected. You likely are loading a multiplayer save file in singleplayer.")
-            else
+            if item then
                 local env = item.data.env
 
                 for index, api in pairs(computer.apis) do
