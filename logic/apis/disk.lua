@@ -7,7 +7,7 @@ table.insert(computer.apis,{
     prototype = {
     -- Public methods
         readFile = {
-            "disk.readFile(filepath) - Writes the value of each of its arguments to the file.",
+            "disk.readFile(filepath) - Returns the contents of the file specified by the argument.",
             function(self, filepath)
                 return self.__readFile(filepath)
             end
@@ -29,7 +29,7 @@ table.insert(computer.apis,{
             end
         },
         removeFile = {
-            "disk.removeFile(filepath) - Append the value of each of its arguments to the file.",
+            "disk.removeFile(filepath) - Removes the file specified by the argument if it exists.",
             function(self, filepath)
                 if self.__fileExist(filepath) then
                     self.__removeFile(filepath)
