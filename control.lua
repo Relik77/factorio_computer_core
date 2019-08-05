@@ -562,11 +562,13 @@ script.on_load(function()
     for index, data in pairs(global.computers) do
         if data.process ~= nil then
             local item = computer.load(data)
-            local env = item.data.env
+            if item then
+                local env = item.data.env
 
-            for index, api in pairs(computer.apis) do
-                if env.apis[api.name] and not type(getmetatable(env.apis[api.name])) ~= "string" then
-                    item:loadAPI(api, env.apis[api.name], env.proxies[api.name], env)
+                for index, api in pairs(computer.apis) do
+                    if env.apis[api.name] and not type(getmetatable(env.apis[api.name])) ~= "string" then
+                        item:loadAPI(api, env.apis[api.name], env.proxies[api.name], env)
+                    end
                 end
             end
         end
